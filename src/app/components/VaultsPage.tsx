@@ -1,256 +1,155 @@
-import { motion } from 'motion/react';
-import { Vault, Target, TrendingUp, Calendar, Plus, Sparkles, PiggyBank, Home as HomeIcon, Plane, GraduationCap } from 'lucide-react';
 import { useState } from 'react';
-import { useTheme } from '../contexts/ThemeContext';
+import { motion } from 'motion/react';
+import { Eye, EyeOff, ChevronDown, ArrowDownLeft, Landmark } from 'lucide-react';
 
+/* ── Crypto token data ───────────────────────────────────── */
+const CRYPTO_TOKENS = [
+  { symbol: 'USDT', name: 'TetherUS',   balance: '0,00', eur: '0,00', color: '#26A17B', letter: 'T' },
+  { symbol: 'USDC', name: 'USDC',        balance: '0,00', eur: '0,00', color: '#2775CA', letter: 'U' },
+  { symbol: 'BTC',  name: 'Bitcoin',     balance: '0,00', eur: '0,00', color: '#F7931A', letter: '₿' },
+  { symbol: 'ETH',  name: 'Ethereum',    balance: '0,00', eur: '0,00', color: '#627EEA', letter: 'Ξ' },
+  { symbol: 'SOL',  name: 'Solana',      balance: '0,00', eur: '0,00', color: '#9945FF', letter: 'S' },
+  { symbol: 'BNB',  name: 'BNB',         balance: '0,00', eur: '0,00', color: '#F3BA2F', letter: 'B' },
+];
+
+const FIAT_TOKENS = [
+  { symbol: 'EUR', name: 'Euro',          balance: '1,02', eur: '1,02', color: '#003087', letter: '€' },
+  { symbol: 'USD', name: 'US Dollar',     balance: '0,00', eur: '0,00', color: '#1DA462', letter: '$' },
+  { symbol: 'GBP', name: 'British Pound', balance: '0,00', eur: '0,00', color: '#CF142B', letter: '£' },
+];
+
+/* ── Token row ───────────────────────────────────────────── */
+function TokenRow({
+  token,
+  index,
+  visible,
+}: {
+  token: (typeof CRYPTO_TOKENS)[0];
+  index: number;
+  visible: boolean;
+}) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, x: -8 }}
+      animate={{ opacity: 1, x: 0 }}
+      transition={{ delay: index * 0.04 }}
+      className="flex items-center px-5 py-3.5 hover:bg-neutral-50 active:bg-neutral-100 transition-colors cursor-pointer border-b border-neutral-100 last:border-0"
+    >
+      {/* Icon */}
+      <div
+        className="w-10 h-10 rounded-full flex items-center justify-center mr-3 flex-shrink-0 text-white font-bold text-sm"
+        style={{ background: token.color }}
+      >
+        {token.letter}
+      </div>
+
+      {/* Name */}
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-semibold text-neutral-900">{token.symbol}</p>
+        <p className="text-xs text-neutral-400">{token.name}</p>
+      </div>
+
+      {/* Balance */}
+      <div className="text-right">
+        <p className="text-sm font-semibold text-neutral-900 tabular-nums">
+          {visible ? token.balance : '••••'}
+        </p>
+        <p className="text-xs text-neutral-400 tabular-nums">
+          ≈ {visible ? token.eur : '••'} EUR
+        </p>
+      </div>
+    </motion.div>
+  );
+}
+
+/* ── main ────────────────────────────────────────────────── */
 export function VaultsPage() {
-  const { theme } = useTheme();
-  const [selectedVault, setSelectedVault] = useState<string | null>(null);
+  const [visible, setVisible] = useState(true);
+  const [activeTab, setActiveTab] = useState<'crypto' | 'fiat'>('crypto');
 
-  const vaults = [
-    {
-      id: 'emergency',
-      name: 'Emergency Fund',
-      icon: Vault,
-      current: 8450,
-      target: 10000,
-      monthlyDeposit: 500,
-      interestRate: 2.5,
-      endDate: '2026-08-01'
-    },
-    {
-      id: 'vacation',
-      name: 'Summer Vacation',
-      icon: Plane,
-      current: 3200,
-      target: 5000,
-      monthlyDeposit: 300,
-      interestRate: 1.8,
-      endDate: '2026-07-01'
-    },
-    {
-      id: 'house',
-      name: 'House Down Payment',
-      icon: HomeIcon,
-      current: 25000,
-      target: 50000,
-      monthlyDeposit: 1200,
-      interestRate: 3.2,
-      endDate: '2027-12-31'
-    },
-    {
-      id: 'education',
-      name: 'Education Fund',
-      icon: GraduationCap,
-      current: 12000,
-      target: 20000,
-      monthlyDeposit: 400,
-      interestRate: 2.8,
-      endDate: '2027-09-01'
-    }
-  ];
-
-  const totalSaved = vaults.reduce((sum, vault) => sum + vault.current, 0);
-  const totalTarget = vaults.reduce((sum, vault) => sum + vault.target, 0);
+  const tokens = activeTab === 'crypto' ? CRYPTO_TOKENS : FIAT_TOKENS;
 
   return (
-    <div className="h-full overflow-y-auto px-5 pb-6">
-      {/* Header */}
+    <div className="h-full overflow-y-auto bg-white">
+      {/* ── Total assets header ── */}
       <motion.div
-        initial={{ opacity: 0, y: -20 }}
+        initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
-        className="mb-6"
+        className="px-5 pt-5 pb-4"
       >
-        <div className="flex items-center justify-between mb-2">
-          <h1 className="text-xl font-bold font-['Outfit']">Savings Vaults</h1>
+        <div className="flex items-center gap-2 mb-1">
+          <button className="flex items-center gap-1 text-xs text-neutral-400 font-medium hover:text-neutral-600 transition-colors">
+            Totale patrimonio stimato <ChevronDown className="w-3 h-3" />
+          </button>
+          <button onClick={() => setVisible(v => !v)} className="p-1 rounded-md hover:bg-neutral-50">
+            {visible
+              ? <Eye className="w-3.5 h-3.5 text-neutral-400" strokeWidth={1.5} />
+              : <EyeOff className="w-3.5 h-3.5 text-neutral-400" strokeWidth={1.5} />
+            }
+          </button>
+        </div>
+
+        <div className="flex items-end gap-2 mb-4">
+          <span className="font-['Outfit'] text-[42px] font-bold tracking-tight text-neutral-900 leading-none">
+            {visible ? '0,00' : '••••'}
+          </span>
+          <button className="flex items-center gap-1 text-sm font-semibold text-neutral-700 mb-1 hover:bg-neutral-50 px-1 py-0.5 rounded-lg">
+            EUR <ChevronDown className="w-3.5 h-3.5 opacity-60" />
+          </button>
+        </div>
+
+        {/* Action buttons */}
+        <div className="flex gap-2.5">
           <motion.button
-            whileHover={{ scale: 1.05, rotate: 90 }}
-            whileTap={{ scale: 0.95 }}
-            className="w-10 h-10 rounded-full bg-black text-white flex items-center justify-center active:bg-neutral-800 transition-colors"
+            whileTap={{ scale: 0.97 }}
+            className="flex-1 flex items-center justify-center gap-2 py-3.5 rounded-2xl bg-black text-white text-sm font-semibold"
           >
-            <Plus className="w-5 h-5" />
+            <ArrowDownLeft className="w-4 h-4" />
+            Aggiungi fondi
+          </motion.button>
+          <motion.button
+            whileTap={{ scale: 0.97 }}
+            className="flex-1 flex items-center justify-center gap-2 py-3.5 rounded-2xl border border-neutral-200 bg-white text-neutral-800 text-sm font-semibold"
+          >
+            <Landmark className="w-4 h-4" />
+            Credito
           </motion.button>
         </div>
-        <p className="text-muted-foreground text-sm">Save for your future goals</p>
       </motion.div>
 
-      {/* Total Progress Card */}
-      <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ delay: 0.1 }}
-        className="bg-white/80 backdrop-blur-sm rounded-3xl p-6 mb-6 border border-neutral-100"
-      >
-        <div className="flex items-center gap-2 mb-2">
-          <Sparkles className="w-5 h-5 text-foreground/60" />
-          <span className="text-sm text-foreground/60">Total Savings Progress</span>
-        </div>
-        <div className="flex items-baseline gap-2 mb-4">
-          <div className="text-3xl font-['Outfit'] font-bold text-foreground">
-            €{totalSaved.toLocaleString()}
-          </div>
-          <span className="text-sm text-foreground/60">/ €{totalTarget.toLocaleString()}</span>
-        </div>
-
-        {/* Progress bar */}
-        <div className="relative h-3 bg-neutral-100 rounded-full overflow-hidden mb-3">
-          <motion.div
-            className={`absolute inset-y-0 left-0 ${theme === 'purple' ? 'bg-purple-500' : 'bg-green-500'} rounded-full`}
-            initial={{ width: 0 }}
-            animate={{ width: `${(totalSaved / totalTarget) * 100}%` }}
-            transition={{ delay: 0.3, duration: 1, ease: 'easeOut' }}
-          />
-        </div>
-
-        <div className="flex items-center justify-between text-sm">
-          <span className="text-foreground/60">{Math.round((totalSaved / totalTarget) * 100)}% Complete</span>
-          <span className="text-foreground/60">€{(totalTarget - totalSaved).toLocaleString()} to go</span>
-        </div>
-      </motion.div>
-
-      {/* Quick Stats */}
-      <div className="grid grid-cols-3 gap-3 mb-6">
-        {[
-          { label: 'Monthly', value: `€${vaults.reduce((sum, v) => sum + v.monthlyDeposit, 0)}`, icon: Calendar },
-          { label: 'Avg Rate', value: `${(vaults.reduce((sum, v) => sum + v.interestRate, 0) / vaults.length).toFixed(1)}%`, icon: TrendingUp },
-          { label: 'Goals', value: vaults.length.toString(), icon: Target }
-        ].map((stat, i) => (
-          <motion.div
-            key={stat.label}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 + i * 0.05 }}
-            className="bg-white rounded-2xl p-4 border border-neutral-100 text-center"
+      {/* ── Tabs ── */}
+      <div className="flex border-b border-neutral-200 px-5">
+        {(['crypto', 'fiat'] as const).map(tab => (
+          <button
+            key={tab}
+            onClick={() => setActiveTab(tab)}
+            className={`mr-6 pb-3 text-sm font-semibold transition-colors relative ${
+              activeTab === tab ? 'text-neutral-900' : 'text-neutral-400 hover:text-neutral-600'
+            }`}
           >
-            <stat.icon className="w-5 h-5 mx-auto mb-2 text-foreground/60" strokeWidth={2} />
-            <div className="text-lg font-semibold font-['Outfit']">{stat.value}</div>
-            <div className="text-xs text-foreground/40">{stat.label}</div>
-          </motion.div>
+            {tab === 'crypto' ? 'Criptovalute' : 'Valute fiat'}
+            {activeTab === tab && (
+              <motion.div
+                layoutId="tabIndicator"
+                className="absolute bottom-0 left-0 right-0 h-0.5 bg-neutral-900 rounded-full"
+              />
+            )}
+          </button>
         ))}
       </div>
 
-      {/* Vaults List */}
-      <div className="space-y-4">
-        <h3 className="text-sm font-semibold text-foreground/40 mb-3">Your Goals</h3>
-        {vaults.map((vault, index) => {
-          const progress = (vault.current / vault.target) * 100;
-          const isSelected = selectedVault === vault.id;
-          const monthsRemaining = Math.ceil((vault.target - vault.current) / vault.monthlyDeposit);
-
-          return (
-            <motion.div
-              key={vault.id}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4 + index * 0.05 }}
-              onClick={() => setSelectedVault(isSelected ? null : vault.id)}
-              className="bg-white rounded-2xl p-5 border border-neutral-100 transition-all cursor-pointer"
-            >
-              <div>
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-11 h-11 rounded-xl bg-neutral-100 flex items-center justify-center">
-                      <vault.icon className="w-5 h-5" strokeWidth={2} />
-                    </div>
-                    <div>
-                      <h3 className="font-semibold text-sm">{vault.name}</h3>
-                      <div className="text-xs text-foreground/40">
-                        {vault.interestRate}% interest rate
-                      </div>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <div className="font-semibold font-['Outfit'] text-lg">
-                      €{vault.current.toLocaleString()}
-                    </div>
-                    <div className="text-xs text-foreground/40">
-                      of €{vault.target.toLocaleString()}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Progress Bar */}
-                <div className="relative h-2 bg-neutral-100 rounded-full overflow-hidden mb-3">
-                  <motion.div
-                    className={`absolute inset-y-0 left-0 ${theme === 'purple' ? 'bg-purple-500' : 'bg-green-500'} rounded-full`}
-                    initial={{ width: 0 }}
-                    animate={{ width: `${progress}%` }}
-                    transition={{ delay: 0.5 + index * 0.05, duration: 0.8, ease: 'easeOut' }}
-                  />
-                </div>
-
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-foreground/60">{Math.round(progress)}% saved</span>
-                  <span className="text-foreground/60">{monthsRemaining} months left</span>
-                </div>
-
-                {/* Expanded Details */}
-                <motion.div
-                  initial={false}
-                  animate={{
-                    height: isSelected ? 'auto' : 0,
-                    opacity: isSelected ? 1 : 0
-                  }}
-                  transition={{ duration: 0.3 }}
-                  className="overflow-hidden"
-                >
-                  <div className="mt-4 pt-4 border-t border-neutral-100 space-y-3">
-                    <div className="flex justify-between text-sm">
-                      <span className="text-foreground/60">Monthly Deposit</span>
-                      <span className="font-semibold">€{vault.monthlyDeposit}</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-foreground/60">Target Date</span>
-                      <span className="font-semibold">{new Date(vault.endDate).toLocaleDateString()}</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-foreground/60">Projected Earnings</span>
-                      <span className={`font-semibold ${theme === 'purple' ? 'text-purple-500' : 'text-green-500'}`}>
-                        +€{Math.round(vault.current * vault.interestRate * monthsRemaining / 1200)}
-                      </span>
-                    </div>
-                    <div className="grid grid-cols-2 gap-2 mt-4">
-                      <motion.button
-                        whileHover={{ scale: 1.02 }}
-                        whileTap={{ scale: 0.98 }}
-                        className="bg-black text-white rounded-xl py-2 text-sm font-medium active:bg-neutral-800 transition-colors"
-                      >
-                        Add Money
-                      </motion.button>
-                      <motion.button
-                        whileHover={{ scale: 1.02 }}
-                        whileTap={{ scale: 0.98 }}
-                        className="bg-white text-foreground border border-neutral-100 rounded-xl py-2 text-sm font-medium hover:bg-neutral-50 active:bg-neutral-100 transition-colors"
-                      >
-                        Edit Goal
-                      </motion.button>
-                    </div>
-                  </div>
-                </motion.div>
-              </div>
-            </motion.div>
-          );
-        })}
+      {/* ── Token list ── */}
+      <div>
+        {tokens.map((token, i) => (
+          <TokenRow key={token.symbol} token={token} index={i} visible={visible} />
+        ))}
       </div>
 
-      {/* Savings Tips */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.8 }}
-        className="mt-6 bg-white/80 backdrop-blur-sm rounded-2xl p-5 border border-neutral-100"
-      >
-        <div className="flex items-start gap-4">
-          <PiggyBank className={`w-6 h-6 ${theme === 'purple' ? 'text-purple-500' : 'text-green-500'} flex-shrink-0 mt-1`} strokeWidth={2} />
-          <div>
-            <h3 className="font-semibold mb-1 text-sm">Savings Tip</h3>
-            <p className="text-sm text-foreground/60 leading-relaxed">
-              You're on track to save €{vaults.reduce((sum, v) => sum + v.monthlyDeposit, 0).toLocaleString()} this month.
-              Keep it up! Consider increasing your emergency fund contribution by 10% for better protection.
-            </p>
-          </div>
-        </div>
-      </motion.div>
+      {/* Bottom note */}
+      <p className="px-5 py-4 text-xs text-neutral-400 text-center">
+        I saldi in criptovaluta sono aggiornati in tempo reale.
+        <br />Conformità MiCA · Regolamento UE 2023/1114
+      </p>
     </div>
   );
 }
