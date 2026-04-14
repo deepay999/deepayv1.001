@@ -36,5 +36,6 @@ Route::get('binance', 'Binance\ProcessController@ipn')->name('Binance');
 Route::any('alipay', 'Alipay\ProcessController@ipn')->name('Alipay');
 Route::post('wechat-pay', 'WechatPay\ProcessController@ipn')->name('WechatPay');
 Route::post('swan', 'Swan\ProcessController@ipn')->name('Swan');
+Route::post('airwallex', 'Airwallex\ProcessController@ipn')->name('Airwallex');
 Route::get('alipay/query', 'Alipay\ProcessController@query')->name('AlipayQuery');
 Route::get('wechat-pay/query', 'WechatPay\ProcessController@query')->name('WechatPayQuery');

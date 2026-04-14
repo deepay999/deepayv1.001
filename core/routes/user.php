@@ -243,5 +243,6 @@ Route::middleware('auth')->name('user.')->group(function () {
         });
 
         Route::get('deposit/swan/callback/{trx}', 'Gateway\Swan\ProcessController@callback')->name('deposit.swan.callback');
+        Route::get('deposit/airwallex/callback/{trx}', 'Gateway\Airwallex\ProcessController@callback')->name('deposit.airwallex.callback');
     });
 });

@@ -62,6 +62,49 @@ class AutomaticGatewayController extends Controller
         return to_route('admin.gateway.automatic.edit', $gateway->alias)->withNotify($notify);
     }
 
+    public function airwallex()
+    {
+        $gateway = Gateway::automatic()->where('alias', 'Airwallex')->first();
+
+        if (!$gateway) {
+            return view('admin.gateways.automatic.airwallex');
+        }
+
+        return redirect()->route('admin.gateway.automatic.edit', $gateway->alias);
+    }
+
+    public function airwallexCreate()
+    {
+        $gateway = Gateway::where('alias', 'Airwallex')->first();
+
+        if (!$gateway) {
+            $gateway = new Gateway();
+            $gateway->form_id = 0;
+            $gateway->code = 126;
+            $gateway->name = 'Airwallex';
+            $gateway->alias = 'Airwallex';
+            $gateway->image = '';
+            $gateway->status = 0;
+            $gateway->gateway_parameters = json_encode([
+                'client_id'   => ['title' => 'Client ID', 'global' => true, 'value' => ''],
+                'api_key'     => ['title' => 'API Key', 'global' => true, 'value' => ''],
+                'environment' => ['title' => 'Environment (demo / production)', 'global' => true, 'value' => 'demo'],
+            ]);
+            $gateway->supported_currencies = json_encode([
+                'AUD' => 'AUD', 'CAD' => 'CAD', 'CNY' => 'CNY', 'EUR' => 'EUR',
+                'GBP' => 'GBP', 'HKD' => 'HKD', 'JPY' => 'JPY', 'SGD' => 'SGD',
+                'USD' => 'USD',
+            ]);
+            $gateway->crypto = 0;
+            $gateway->extra = null;
+            $gateway->description = null;
+            $gateway->save();
+        }
+
+        $notify[] = ['success', 'Airwallex gateway record created. Configure credentials and supported currencies before enabling the gateway.'];
+        return to_route('admin.gateway.automatic.edit', $gateway->alias)->withNotify($notify);
+    }
+
     public function edit($alias)
     {
         $gateway = Gateway::automatic()->with('currencies', 'currencies.method')->where('alias', $alias)->firstOrFail();

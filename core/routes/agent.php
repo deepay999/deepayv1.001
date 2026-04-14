@@ -135,4 +135,5 @@ Route::prefix('deposit')->name('agent.deposit.')->middleware('kyc.agent')->contr
     Route::get('manual', 'manualDepositConfirm')->name('manual.confirm');
     Route::post('manual', 'manualDepositUpdate')->name('manual.update');
     Route::get('swan/callback/{trx}', 'Gateway\Swan\ProcessController@callback')->name('swan.callback');
+    Route::get('airwallex/callback/{trx}', 'Gateway\Airwallex\ProcessController@callback')->name('deposit.airwallex.callback');
 });

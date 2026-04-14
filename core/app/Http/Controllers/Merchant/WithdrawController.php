@@ -115,7 +115,8 @@ class WithdrawController extends Controller
         $withdraw->status = Status::PAYMENT_PENDING;
         $withdraw->withdraw_information = $userData;
         $withdraw->save();
-        $user->balance  -=  $withdraw->amount;
+        $user->balance        -= $withdraw->amount;
+        $user->frozen_balance += $withdraw->amount;
         $user->save();
 
         $transaction = new Transaction();

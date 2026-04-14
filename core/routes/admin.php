@@ -744,6 +744,8 @@ Route::middleware('admin')->group(function () {
             Route::get('/', 'index')->name('index');
             Route::get('swan', 'swan')->name('swan');
             Route::post('swan/create', 'swanCreate')->name('swan.setup');
+            Route::get('airwallex', 'airwallex')->name('airwallex');
+            Route::post('airwallex/create', 'airwallexCreate')->name('airwallex.setup');
             Route::get('edit/{alias}', 'edit')->name('edit');
             Route::post('update/{code}', 'update')->name('update');
             Route::post('remove/{id}', 'remove')->name('remove');

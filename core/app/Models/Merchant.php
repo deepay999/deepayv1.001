@@ -27,6 +27,7 @@ class Merchant extends Authenticatable
         'kyc_data'                    => 'object',
         'ver_code_send_at'            => 'datetime',
         'balance'                     => 'double',
+        'frozen_balance'              => 'double',
         'status'                      => 'integer',
         'kv'                          => 'integer',
         'ev'                          => 'integer',

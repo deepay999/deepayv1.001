@@ -99,6 +99,10 @@ class MerchantWithdrawalController extends Controller
         $withdraw->admin_feedback = $request->details;
         $withdraw->save();
 
+        $merchant                  = $withdraw->merchant;
+        $merchant->frozen_balance  = max(0, $merchant->frozen_balance - $withdraw->amount);
+        $merchant->save();
+
         notify($withdraw->merchant, 'WITHDRAW_APPROVE', [
             'method_name'     => $withdraw->method->name,
             'method_currency' => $withdraw->currency,
@@ -124,8 +128,9 @@ class MerchantWithdrawalController extends Controller
         $withdraw->admin_feedback = $request->details;
         $withdraw->save();
 
-        $merchant = $withdraw->merchant;
-        $merchant->balance += $withdraw->amount;
+        $merchant                  = $withdraw->merchant;
+        $merchant->balance        += $withdraw->amount;
+        $merchant->frozen_balance  = max(0, $merchant->frozen_balance - $withdraw->amount);
         $merchant->save();
 
         $transaction               = new Transaction();

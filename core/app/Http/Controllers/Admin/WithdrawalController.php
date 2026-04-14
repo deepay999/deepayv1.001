@@ -97,6 +97,10 @@ class WithdrawalController extends Controller
         $withdraw->admin_feedback = $request->details;
         $withdraw->save();
 
+        $agent                  = $withdraw->agent;
+        $agent->frozen_balance  = max(0, $agent->frozen_balance - $withdraw->amount);
+        $agent->save();
+
         notify($withdraw->agent, 'WITHDRAW_APPROVE', [
             'method_name'     => $withdraw->method->name,
             'method_currency' => $withdraw->currency,
@@ -122,9 +126,9 @@ class WithdrawalController extends Controller
         $withdraw->admin_feedback = $request->details;
         $withdraw->save();
 
-        $agent = $withdraw->agent;
-
-        $agent->balance += $withdraw->amount;
+        $agent                  = $withdraw->agent;
+        $agent->balance        += $withdraw->amount;
+        $agent->frozen_balance  = max(0, $agent->frozen_balance - $withdraw->amount);
         $agent->save();
 
         $transaction               = new Transaction();
