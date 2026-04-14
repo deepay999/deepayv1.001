@@ -1,12 +1,12 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Home, CreditCard, Wallet, Send } from 'lucide-react';
+import { Home, CreditCard, Wallet, Send, QrCode } from 'lucide-react';
 import { HomePage } from './components/HomePage';
 import { TransferPage } from './components/TransferPage';
 import { CardsPage } from './components/CardsPage';
 import { VaultsPage } from './components/VaultsPage';
 import { ProfilePage } from './components/ProfilePage';
-import { LandingPage } from './components/LandingPage';
+import { QRCodePage } from './components/QRCodePage';
 import { TransferModal } from './components/TransferModal';
 import { AddMoneyModal } from './components/AddMoneyModal';
 import { ParticlesBackground } from './components/ParticlesBackground';
@@ -22,7 +22,6 @@ export default function App() {
   const [showSplash, setShowSplash] = useState(true);
   const [isChangingPage, setIsChangingPage] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
-  const [showLanding, setShowLanding] = useState(false);
 
   const handleTabChange = (tabId: string) => {
     setIsChangingPage(true);
@@ -34,7 +33,7 @@ export default function App() {
 
   const renderPage = () => {
     if (showProfile) {
-      return <ProfilePage onBack={() => setShowProfile(false)} onViewWebsite={() => setShowLanding(true)} />;
+      return <ProfilePage onBack={() => setShowProfile(false)} onViewWebsite={() => {}} />;
     }
 
     switch (activeTab) {
@@ -52,19 +51,12 @@ export default function App() {
         return <CardsPage />;
       case 'wallet':
         return <VaultsPage />;
+      case 'qr':
+        return <QRCodePage />;
       default:
         return null;
     }
   };
-
-  // 如果显示落地页，直接返回落地页组件
-  if (showLanding) {
-    return (
-      <ThemeProvider>
-        <LandingPage onClose={() => setShowLanding(false)} />
-      </ThemeProvider>
-    );
-  }
 
   return (
     <ThemeProvider>
@@ -224,78 +216,86 @@ export default function App() {
                   boxShadow: '0 -2px 20px rgba(0, 0, 0, 0.03)'
                 }}
               >
-            <div className="h-full flex items-center justify-around px-6">
+            {/* 5-tab nav: Home · Cards · QR (centre FAB) · Transfer · Wallet */}
+            <div className="h-full flex items-center justify-around px-2">
               {[
-                { id: 'home', icon: Home, label: '主页' },
-                { id: 'cards', icon: CreditCard, label: '卡片' },
-                { id: 'transfer', icon: Send, label: '转账' },
-                { id: 'wallet', icon: Wallet, label: '钱包' }
-              ].map((tab, index) => (
-                <motion.button
-                  key={tab.id}
-                  onClick={() => handleTabChange(tab.id)}
-                  whileHover={{ y: -3 }}
-                  whileTap={{ scale: 0.92 }}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 3.5 + index * 0.08 }}
-                  className="flex flex-col items-center gap-1.5 relative py-2 px-4"
-                >
-                  {/* Active background pill */}
-                  {activeTab === tab.id && (
-                    <motion.div
-                      layoutId="activeBg"
-                      className="absolute inset-0 bg-black/5 rounded-2xl"
-                      transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-                    />
-                  )}
-
-                  {/* Icon container */}
-                  <motion.div
-                    className="relative z-10"
-                    animate={activeTab === tab.id ? {
-                      scale: [1, 1.15, 1]
-                    } : {}}
-                    transition={{ duration: 0.4 }}
+                { id: 'home',     icon: Home,      label: 'Home'      },
+                { id: 'cards',    icon: CreditCard, label: 'Carte'     },
+                { id: 'qr',       icon: QrCode,     label: 'Scansiona', fab: true },
+                { id: 'transfer', icon: Send,       label: 'Trasferisci' },
+                { id: 'wallet',   icon: Wallet,     label: 'Portafoglio' },
+              ].map((tab, index) => {
+                if (tab.fab) {
+                  return (
+                    <motion.button
+                      key={tab.id}
+                      onClick={() => handleTabChange(tab.id)}
+                      whileTap={{ scale: 0.9 }}
+                      initial={{ opacity: 0, scale: 0.6 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ delay: 3.6, type: 'spring', stiffness: 300, damping: 20 }}
+                      className="flex flex-col items-center gap-1 -mt-6"
+                    >
+                      <div
+                        className="w-14 h-14 rounded-[1.2rem] flex items-center justify-center shadow-lg"
+                        style={{
+                          background: activeTab === tab.id
+                            ? 'linear-gradient(135deg,#059669,#10B981)'
+                            : 'linear-gradient(135deg,#0A0A0A,#1A1A1A)',
+                          boxShadow: '0 8px 24px rgba(16,185,129,0.35)',
+                        }}
+                      >
+                        <QrCode className="w-6 h-6 text-white" strokeWidth={2} />
+                      </div>
+                      <span className="text-[10px] font-medium text-muted-foreground">{tab.label}</span>
+                    </motion.button>
+                  );
+                }
+                return (
+                  <motion.button
+                    key={tab.id}
+                    onClick={() => handleTabChange(tab.id)}
+                    whileHover={{ y: -2 }}
+                    whileTap={{ scale: 0.92 }}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 3.5 + index * 0.07 }}
+                    className="flex flex-col items-center gap-1.5 relative py-2 px-3"
                   >
-                    <tab.icon
-                      className={`w-6 h-6 transition-all duration-300 ${
-                        activeTab === tab.id ? 'text-primary' : 'text-muted-foreground'
-                      }`}
-                      strokeWidth={activeTab === tab.id ? 2.5 : 2}
-                    />
-
-                    {/* Active glow effect */}
                     {activeTab === tab.id && (
                       <motion.div
-                        className="absolute inset-0 blur-md opacity-20"
-                        style={{ background: 'currentColor' }}
-                        animate={{
-                          scale: [1, 1.3, 1],
-                          opacity: [0.2, 0.3, 0.2]
-                        }}
-                        transition={{ duration: 2, repeat: Infinity }}
+                        layoutId="activeBg"
+                        className="absolute inset-0 bg-black/5 rounded-2xl"
+                        transition={{ type: 'spring', stiffness: 400, damping: 30 }}
                       />
                     )}
-                  </motion.div>
-
-                  {/* Label */}
-                  <span className={`text-xs font-medium transition-all duration-300 relative z-10 ${
-                    activeTab === tab.id ? 'text-foreground' : 'text-muted-foreground'
-                  }`}>
-                    {tab.label}
-                  </span>
-
-                  {/* Active indicator dot */}
-                  {activeTab === tab.id && (
                     <motion.div
-                      layoutId="activeIndicator"
-                      className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 bg-primary rounded-full"
-                      transition={{ type: 'spring', stiffness: 500, damping: 35 }}
-                    />
-                  )}
-                </motion.button>
-              ))}
+                      className="relative z-10"
+                      animate={activeTab === tab.id ? { scale: [1, 1.15, 1] } : {}}
+                      transition={{ duration: 0.4 }}
+                    >
+                      <tab.icon
+                        className={`w-5 h-5 transition-all duration-300 ${
+                          activeTab === tab.id ? 'text-primary' : 'text-muted-foreground'
+                        }`}
+                        strokeWidth={activeTab === tab.id ? 2.5 : 2}
+                      />
+                    </motion.div>
+                    <span className={`text-[10px] font-medium transition-all duration-300 relative z-10 ${
+                      activeTab === tab.id ? 'text-foreground' : 'text-muted-foreground'
+                    }`}>
+                      {tab.label}
+                    </span>
+                    {activeTab === tab.id && (
+                      <motion.div
+                        layoutId="activeIndicator"
+                        className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 bg-primary rounded-full"
+                        transition={{ type: 'spring', stiffness: 500, damping: 35 }}
+                      />
+                    )}
+                  </motion.button>
+                );
+              })}
             </div>
           </motion.div>
             )}
