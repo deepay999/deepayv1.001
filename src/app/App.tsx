@@ -1,12 +1,12 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Home, Coins, CreditCard, Wallet, QrCode } from 'lucide-react';
+import { Home, Coins, CreditCard, Wallet, QrCode, Star } from 'lucide-react';
 import { HomePage } from './components/HomePage';
 import { CardsPage } from './components/CardsPage';
 import { VaultsPage } from './components/VaultsPage';
 import { ProfilePage } from './components/ProfilePage';
 import { QRCodePage } from './components/QRCodePage';
-import { TransferModal } from './components/TransferModal';
+import { PointsPage } from './components/PointsPage';
 import { AddMoneyModal } from './components/AddMoneyModal';
 import { SplashScreen } from './components/SplashScreen';
 import { PageSwipeTransition } from './components/PageTransition';
@@ -18,6 +18,7 @@ const TABS = [
   { id: 'cripto', icon: Coins,       label: 'Cripto'      },
   { id: 'carte',  icon: CreditCard,  label: 'Carte'       },
   { id: 'assets', icon: Wallet,      label: 'Portafoglio' },
+  { id: 'points', icon: Star,        label: 'Points'      },
 ];
 
 /* ─── App ─────────────────────────────────────────────────── */
@@ -37,6 +38,7 @@ export default function App() {
       case 'cripto': return <VaultsPage />;   // crypto/assets view
       case 'carte':  return <CardsPage />;
       case 'assets': return <VaultsPage />;   // full portfolio
+      case 'points': return <PointsPage />;
       default:       return null;
     }
   };

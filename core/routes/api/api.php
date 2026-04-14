@@ -264,6 +264,12 @@ Route::namespace('Api')->name('api.')->group(function () {
                 Route::get('{id}', 'show');
             });
 
+            // Points
+            Route::controller('PointController')->prefix('points')->group(function () {
+                Route::get('/', 'index');
+                Route::post('reward', 'reward');
+            });
+
             //Investment
             Route::prefix('investment')->name('investment.')->middleware(['module:investment'])->controller('InvestmentController')->group(function () {
                 Route::get('plan', 'all')->name('all');
