@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Home, Coins, CreditCard, Wallet, QrCode } from 'lucide-react';
+import { Home, ArrowLeftRight, CreditCard, Wallet, QrCode } from 'lucide-react';
 import { HomePage } from './components/HomePage';
 import { CardsPage } from './components/CardsPage';
-import { VaultsPage } from './components/VaultsPage';
+import { WalletsPage } from './components/WalletsPage';
 import { ProfilePage } from './components/ProfilePage';
 import { QRCodePage } from './components/QRCodePage';
 import { TransferModal } from './components/TransferModal';
@@ -14,10 +14,10 @@ import { ThemeProvider } from './contexts/ThemeContext';
 
 /* ─── nav tab definition ──────────────────────────────────── */
 const TABS = [
-  { id: 'home',   icon: Home,       label: 'Home'        },
-  { id: 'cripto', icon: Coins,       label: 'Cripto'      },
-  { id: 'carte',  icon: CreditCard,  label: 'Carte'       },
-  { id: 'assets', icon: Wallet,      label: 'Portafoglio' },
+  { id: 'home',     icon: Home,            label: 'Home'       },
+  { id: 'transfer', icon: ArrowLeftRight,  label: 'Transfer'   },
+  { id: 'cards',    icon: CreditCard,      label: 'Cards'      },
+  { id: 'wallets',  icon: Wallet,          label: 'Wallets'    },
 ];
 
 /* ─── App ─────────────────────────────────────────────────── */
@@ -33,11 +33,11 @@ export default function App() {
     if (showProfile) return <ProfilePage onBack={() => setShowProfile(false)} onViewWebsite={() => {}} />;
     if (showQR)      return <QRCodePage />;
     switch (activeTab) {
-      case 'home':   return <HomePage onAddMoney={() => setAddMoneyModal(true)} onTransfer={() => setTransferModal(true)} onOpenProfile={() => setShowProfile(true)} />;
-      case 'cripto': return <VaultsPage />;   // crypto/assets view
-      case 'carte':  return <CardsPage />;
-      case 'assets': return <VaultsPage />;   // full portfolio
-      default:       return null;
+      case 'home':     return <HomePage onAddMoney={() => setAddMoneyModal(true)} onTransfer={() => setTransferModal(true)} onOpenProfile={() => setShowProfile(true)} />;
+      case 'transfer': return <WalletsPage showTransferTab />;
+      case 'cards':    return <CardsPage />;
+      case 'wallets':  return <WalletsPage />;
+      default:         return null;
     }
   };
 
