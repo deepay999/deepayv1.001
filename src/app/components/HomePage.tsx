@@ -3,12 +3,13 @@ import { motion, AnimatePresence } from 'motion/react';
 import {
   Building2, Copy, ChevronDown, Download, FileText,
   Search, Sparkles, TrendingUp, ArrowUpRight, ArrowDownLeft,
-  Repeat, Percent, Eye, EyeOff, X, Gift,
+  Repeat, Percent, Eye, EyeOff, X, Gift, Banknote,
 } from 'lucide-react';
 
 interface HomePageProps {
   onAddMoney: () => void;
   onTransfer: () => void;
+  onWithdraw?: () => void;
   onOpenProfile: () => void;
 }
 
@@ -44,7 +45,7 @@ const IBAN_SHORT = 'IT89 1774 8 ... 3931 6333 343';
 const BIC = 'DEEPIT22XXX';
 const BENEFICIARY = 'La mia azienda';
 
-export function HomePage({ onAddMoney, onTransfer, onOpenProfile }: HomePageProps) {
+export function HomePage({ onAddMoney, onTransfer, onWithdraw, onOpenProfile }: HomePageProps) {
   const [balanceVisible, setBalanceVisible] = useState(true);
   const [showAccountDetails, setShowAccountDetails] = useState(false);
   const [dismissReferral, setDismissReferral] = useState(false);
@@ -125,18 +126,26 @@ export function HomePage({ onAddMoney, onTransfer, onOpenProfile }: HomePageProp
             <motion.button
               whileTap={{ scale: 0.97 }}
               onClick={onAddMoney}
-              className="flex-1 flex items-center justify-center gap-2 py-3.5 rounded-2xl bg-black text-white text-sm font-semibold"
+              className="flex-1 flex flex-col items-center gap-1 py-3 rounded-2xl bg-black text-white text-xs font-semibold"
             >
               <ArrowDownLeft className="w-4 h-4" />
-              Aggiungi fondi
+              Ricevi
             </motion.button>
             <motion.button
               whileTap={{ scale: 0.97 }}
               onClick={onTransfer}
-              className="flex-1 flex items-center justify-center gap-2 py-3.5 rounded-2xl border border-neutral-200 bg-white text-neutral-800 text-sm font-semibold"
+              className="flex-1 flex flex-col items-center gap-1 py-3 rounded-2xl border border-neutral-200 bg-white text-neutral-800 text-xs font-semibold"
             >
               <ArrowUpRight className="w-4 h-4" />
-              Trasferisci
+              Invia
+            </motion.button>
+            <motion.button
+              whileTap={{ scale: 0.97 }}
+              onClick={onWithdraw}
+              className="flex-1 flex flex-col items-center gap-1 py-3 rounded-2xl border border-neutral-200 bg-white text-neutral-800 text-xs font-semibold"
+            >
+              <Banknote className="w-4 h-4" />
+              Preleva
             </motion.button>
           </div>
 
@@ -177,6 +186,33 @@ export function HomePage({ onAddMoney, onTransfer, onOpenProfile }: HomePageProp
               </motion.div>
             )}
           </AnimatePresence>
+        </div>
+      </motion.div>
+
+      {/* ── Today Stats ── */}
+      <motion.div
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.1 }}
+        className="mx-4 mt-3 grid grid-cols-2 gap-3"
+      >
+        <div className="rounded-2xl border border-neutral-100 bg-white px-4 py-3 flex items-center gap-3">
+          <div className="w-8 h-8 rounded-xl bg-emerald-50 flex items-center justify-center flex-shrink-0">
+            <ArrowDownLeft className="w-4 h-4 text-emerald-600" strokeWidth={1.5} />
+          </div>
+          <div>
+            <p className="text-[10px] font-semibold text-neutral-400 uppercase tracking-widest mb-0.5">Entrate oggi</p>
+            <p className="text-sm font-bold text-emerald-600">+€120</p>
+          </div>
+        </div>
+        <div className="rounded-2xl border border-neutral-100 bg-white px-4 py-3 flex items-center gap-3">
+          <div className="w-8 h-8 rounded-xl bg-rose-50 flex items-center justify-center flex-shrink-0">
+            <ArrowUpRight className="w-4 h-4 text-rose-500" strokeWidth={1.5} />
+          </div>
+          <div>
+            <p className="text-[10px] font-semibold text-neutral-400 uppercase tracking-widest mb-0.5">Uscite oggi</p>
+            <p className="text-sm font-bold text-rose-500">-€30</p>
+          </div>
         </div>
       </motion.div>
 

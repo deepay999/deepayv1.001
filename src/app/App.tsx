@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Home, Coins, CreditCard, Wallet, QrCode } from 'lucide-react';
+import { Home, Wallet, ArrowUpRight, Building2, BarChart2, User } from 'lucide-react';
 import { HomePage } from './components/HomePage';
-import { CardsPage } from './components/CardsPage';
-import { VaultsPage } from './components/VaultsPage';
+import { WalletPage } from './components/WalletPage';
+import { TransferPage } from './components/TransferPage';
+import { IBANPage } from './components/IBANPage';
+import { ActivityPage } from './components/ActivityPage';
 import { ProfilePage } from './components/ProfilePage';
-import { QRCodePage } from './components/QRCodePage';
 import { TransferModal } from './components/TransferModal';
 import { AddMoneyModal } from './components/AddMoneyModal';
 import { SplashScreen } from './components/SplashScreen';
@@ -14,10 +15,12 @@ import { ThemeProvider } from './contexts/ThemeContext';
 
 /* ─── nav tab definition ──────────────────────────────────── */
 const TABS = [
-  { id: 'home',   icon: Home,       label: 'Home'        },
-  { id: 'cripto', icon: Coins,       label: 'Cripto'      },
-  { id: 'carte',  icon: CreditCard,  label: 'Carte'       },
-  { id: 'assets', icon: Wallet,      label: 'Portafoglio' },
+  { id: 'home',     icon: Home,        label: 'Home'       },
+  { id: 'wallet',   icon: Wallet,      label: 'Wallet'     },
+  { id: 'transfer', icon: ArrowUpRight, label: 'Transfer'  },
+  { id: 'iban',     icon: Building2,   label: 'IBAN'       },
+  { id: 'activity', icon: BarChart2,   label: 'Activity'   },
+  { id: 'profile',  icon: User,        label: 'Profile'    },
 ];
 
 /* ─── App ─────────────────────────────────────────────────── */
@@ -26,18 +29,24 @@ export default function App() {
   const [showTransferModal, setTransferModal]  = useState(false);
   const [showAddMoneyModal, setAddMoneyModal]  = useState(false);
   const [showSplash, setShowSplash]            = useState(true);
-  const [showProfile, setShowProfile]          = useState(false);
-  const [showQR, setShowQR]                    = useState(false);
 
   const renderPage = () => {
-    if (showProfile) return <ProfilePage onBack={() => setShowProfile(false)} onViewWebsite={() => {}} />;
-    if (showQR)      return <QRCodePage />;
     switch (activeTab) {
-      case 'home':   return <HomePage onAddMoney={() => setAddMoneyModal(true)} onTransfer={() => setTransferModal(true)} onOpenProfile={() => setShowProfile(true)} />;
-      case 'cripto': return <VaultsPage />;   // crypto/assets view
-      case 'carte':  return <CardsPage />;
-      case 'assets': return <VaultsPage />;   // full portfolio
-      default:       return null;
+      case 'home':
+        return (
+          <HomePage
+            onAddMoney={() => setAddMoneyModal(true)}
+            onTransfer={() => setActiveTab('transfer')}
+            onWithdraw={() => {}}
+            onOpenProfile={() => setActiveTab('profile')}
+          />
+        );
+      case 'wallet':   return <WalletPage />;
+      case 'transfer': return <TransferPage />;
+      case 'iban':     return <IBANPage />;
+      case 'activity': return <ActivityPage />;
+      case 'profile':  return <ProfilePage onBack={() => setActiveTab('home')} />;
+      default:         return null;
     }
   };
 
@@ -59,95 +68,53 @@ export default function App() {
         {/* Page content (takes remaining height above nav) */}
         <div className="flex-1 overflow-hidden relative">
           <AnimatePresence mode="wait">
-            <PageSwipeTransition key={showProfile ? 'profile' : showQR ? 'qr' : activeTab}>
+            <PageSwipeTransition key={activeTab}>
               {renderPage()}
             </PageSwipeTransition>
           </AnimatePresence>
         </div>
 
         {/* ── Bottom Navigation ── */}
-        <AnimatePresence>
-          {!showProfile && !showQR && (
-            <motion.nav
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 20 }}
-              transition={{ delay: 3.1, duration: 0.3 }}
-              className="flex-shrink-0 border-t border-neutral-100 bg-white"
-              style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
-            >
-              <div className="flex items-center justify-around px-2 h-16">
-                {TABS.map((tab) => {
-                  const isActive = activeTab === tab.id;
-                  return (
-                    <motion.button
-                      key={tab.id}
-                      onClick={() => setActiveTab(tab.id)}
-                      whileTap={{ scale: 0.88 }}
-                      className="flex flex-col items-center gap-1 px-3 py-1 relative"
-                    >
-                      {/* Pill background for active tab */}
-                      {isActive && (
-                        <motion.div
-                          layoutId="navPill"
-                          className="absolute inset-x-0 top-0 h-8 rounded-2xl bg-neutral-100"
-                          transition={{ type: 'spring', stiffness: 500, damping: 35 }}
-                        />
-                      )}
-                      <tab.icon
-                        className={`w-5 h-5 relative z-10 transition-colors duration-200 ${
-                          isActive ? 'text-neutral-900' : 'text-neutral-400'
-                        }`}
-                        strokeWidth={isActive ? 2.2 : 1.8}
-                      />
-                      <span className={`text-[10px] font-medium relative z-10 transition-colors duration-200 ${
-                        isActive ? 'text-neutral-900' : 'text-neutral-400'
-                      }`}>
-                        {tab.label}
-                      </span>
-                    </motion.button>
-                  );
-                })}
-
-                {/* QR scan FAB — centre */}
+        <motion.nav
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 3.1, duration: 0.3 }}
+          className="flex-shrink-0 border-t border-neutral-100 bg-white"
+          style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
+        >
+          <div className="flex items-center justify-around px-1 h-16">
+            {TABS.map((tab) => {
+              const isActive = activeTab === tab.id;
+              return (
                 <motion.button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
                   whileTap={{ scale: 0.88 }}
-                  onClick={() => setShowQR(v => !v)}
-                  className="flex flex-col items-center gap-1 px-3 py-1"
+                  className="flex flex-col items-center gap-0.5 px-2 py-1 relative flex-1"
                 >
-                  <div
-                    className={`w-10 h-10 rounded-2xl flex items-center justify-center transition-all duration-200 ${
-                      showQR
-                        ? 'bg-emerald-500 shadow-lg shadow-emerald-500/30'
-                        : 'bg-neutral-900 shadow-md shadow-black/20'
+                  {isActive && (
+                    <motion.div
+                      layoutId="navPill"
+                      className="absolute inset-x-1 top-0 h-8 rounded-2xl bg-neutral-100"
+                      transition={{ type: 'spring', stiffness: 500, damping: 35 }}
+                    />
+                  )}
+                  <tab.icon
+                    className={`w-5 h-5 relative z-10 transition-colors duration-200 ${
+                      isActive ? 'text-neutral-900' : 'text-neutral-400'
                     }`}
-                  >
-                    <QrCode className="w-5 h-5 text-white" strokeWidth={2} />
-                  </div>
-                  <span className={`text-[10px] font-medium ${showQR ? 'text-emerald-600' : 'text-neutral-400'}`}>
-                    QR
+                    strokeWidth={isActive ? 2.2 : 1.8}
+                  />
+                  <span className={`text-[9px] font-medium relative z-10 transition-colors duration-200 ${
+                    isActive ? 'text-neutral-900' : 'text-neutral-400'
+                  }`}>
+                    {tab.label}
                   </span>
                 </motion.button>
-              </div>
-            </motion.nav>
-          )}
-        </AnimatePresence>
-
-        {/* Back button when showing profile or QR */}
-        <AnimatePresence>
-          {(showProfile || showQR) && (
-            <motion.button
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 20 }}
-              onClick={() => { setShowProfile(false); setShowQR(false); }}
-              className="fixed bottom-8 left-1/2 -translate-x-1/2 px-6 py-3 rounded-full bg-neutral-900 text-white text-sm font-semibold shadow-xl z-50"
-              style={{ paddingBottom: 'calc(12px + env(safe-area-inset-bottom, 0px))' }}
-            >
-              ← Indietro
-            </motion.button>
-          )}
-        </AnimatePresence>
+              );
+            })}
+          </div>
+        </motion.nav>
       </motion.div>
 
       {/* Modals */}

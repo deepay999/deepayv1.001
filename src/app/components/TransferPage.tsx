@@ -1,158 +1,182 @@
-import { motion } from 'motion/react';
-import { ArrowRight, Users, HelpCircle, ScanLine, ArrowUpDown, ChevronDown } from 'lucide-react';
 import { useState } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
+import { Send, ChevronDown, CheckCircle2, AlertCircle } from 'lucide-react';
 
-interface TransferPageProps {
-  onQuickTransfer: () => void;
-}
+const CURRENCIES = ['EUR', 'USD', 'GBP'];
 
-export function TransferPage({ onQuickTransfer }: TransferPageProps) {
-  const [fromAmount, setFromAmount] = useState('1,000');
-  const [toAmount, setToAmount] = useState('944.87');
-  const [fromCurrency, setFromCurrency] = useState('USDT');
-  const [toCurrency, setToCurrency] = useState('USD');
-  const exchangeRate = 0.9893;
-  const fee = 45.00;
+type SendState = 'idle' | 'sending' | 'success' | 'error';
+
+export function TransferPage() {
+  const [recipient, setRecipient] = useState('');
+  const [amount, setAmount]       = useState('');
+  const [currency, setCurrency]   = useState('EUR');
+  const [showCurrencyPicker, setShowCurrencyPicker] = useState(false);
+  const [state, setState]         = useState<SendState>('idle');
+
+  const isValid = recipient.trim().length > 0 && parseFloat(amount) > 0;
+
+  const handleSend = () => {
+    if (!isValid) return;
+    setState('sending');
+    setTimeout(() => setState('success'), 1500);
+  };
+
+  const handleReset = () => {
+    setRecipient('');
+    setAmount('');
+    setState('idle');
+  };
+
+  const symbolOf: Record<string, string> = { EUR: '€', USD: '$', GBP: '£' };
 
   return (
-    <div className="h-full overflow-y-auto pb-6">
+    <div className="h-full overflow-y-auto bg-white pb-8">
       {/* Header */}
-      <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="px-5 py-5 flex items-center justify-between mb-2"
-      >
-        <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          className="w-11 h-11 rounded-full bg-neutral-200/80 flex items-center justify-center hover:bg-neutral-300/80 active:bg-neutral-400/80 transition-colors"
-        >
-          <div className="w-7 h-7 rounded-full bg-neutral-300/80" />
-        </motion.button>
-        <div className="flex items-center gap-3">
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            className="w-10 h-10 rounded-full flex items-center justify-center hover:bg-neutral-100 active:bg-neutral-200 transition-colors"
-          >
-            <ScanLine className="w-5 h-5 text-foreground/70" strokeWidth={2.5} />
-          </motion.button>
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            className="w-10 h-10 rounded-full flex items-center justify-center hover:bg-neutral-100 active:bg-neutral-200 transition-colors"
-          >
-            <HelpCircle className="w-5 h-5 text-foreground/70" strokeWidth={2.5} />
-          </motion.button>
-        </div>
-      </motion.div>
-
-      {/* Transfer Type Buttons */}
-      <div className="px-5 mb-8">
-        <div className="grid grid-cols-2 gap-3">
-          <motion.button
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.1 }}
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            className="bg-neutral-100/80 rounded-[28px] py-5 px-5 flex items-center justify-between hover:bg-neutral-200/80 active:bg-neutral-300/80 transition-colors"
-          >
-            <span className="text-base font-medium">全球转账</span>
-            <ArrowRight className="w-5 h-5" strokeWidth={2.5} />
-          </motion.button>
-
-          <motion.button
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.1 }}
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            className="bg-neutral-100/80 rounded-[28px] py-5 px-5 flex items-center justify-between hover:bg-neutral-200/80 active:bg-neutral-300/80 transition-colors"
-          >
-            <span className="text-base font-medium">内部转账</span>
-            <Users className="w-5 h-5" strokeWidth={2.5} />
-          </motion.button>
-        </div>
+      <div className="px-5 pt-5 pb-3">
+        <h1 className="text-xl font-bold text-neutral-900">Invia denaro</h1>
+        <p className="text-sm text-neutral-400 mt-0.5">Trasferisci fondi a un altro utente DeePay</p>
       </div>
 
-      {/* Calculator Section */}
-      <div className="px-5">
-        <motion.h2
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.2 }}
-          className="text-lg font-medium mb-5 text-foreground/90"
-        >
-          计算器
-        </motion.h2>
-
-        {/* Calculator Card */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-          className="bg-neutral-100/50 rounded-[32px] p-6"
-        >
-          {/* From Currency */}
-          <div className="mb-2">
-            <div className="bg-white rounded-3xl p-5">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-9 h-9 rounded-full bg-gradient-to-br from-neutral-700 to-neutral-900 flex items-center justify-center">
-                  <span className="text-white font-bold text-sm">₮</span>
-                </div>
-                <span className="font-medium text-base">USDT</span>
-                <ChevronDown className="w-4 h-4 ml-auto text-foreground/40" strokeWidth={2.5} />
-              </div>
+      <AnimatePresence mode="wait">
+        {state === 'success' ? (
+          /* ── Success state ── */
+          <motion.div
+            key="success"
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0 }}
+            className="mx-4 mt-6 rounded-2xl bg-emerald-50 p-8 flex flex-col items-center text-center"
+          >
+            <div className="w-16 h-16 rounded-full bg-emerald-100 flex items-center justify-center mb-4">
+              <CheckCircle2 className="w-8 h-8 text-emerald-600" strokeWidth={1.5} />
+            </div>
+            <p className="text-lg font-bold text-neutral-900 mb-1">Trasferimento inviato!</p>
+            <p className="text-sm text-neutral-500 mb-6">
+              {symbolOf[currency]}{parseFloat(amount || '0').toLocaleString('en-EU', { minimumFractionDigits: 2 })} {currency} → {recipient}
+            </p>
+            <motion.button
+              whileTap={{ scale: 0.97 }}
+              onClick={handleReset}
+              className="px-6 py-3 rounded-xl bg-emerald-600 text-white text-sm font-semibold"
+            >
+              Nuovo trasferimento
+            </motion.button>
+          </motion.div>
+        ) : (
+          /* ── Form ── */
+          <motion.div
+            key="form"
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0 }}
+            className="px-4 space-y-3"
+          >
+            {/* To field */}
+            <div className="rounded-2xl border border-neutral-200 bg-white overflow-hidden">
+              <label className="block px-4 pt-3 text-[10px] font-semibold text-neutral-400 uppercase tracking-widest">
+                Destinatario
+              </label>
               <input
                 type="text"
-                value={fromAmount}
-                onChange={(e) => setFromAmount(e.target.value)}
-                className="w-full bg-transparent text-5xl font-['Outfit'] font-light text-neutral-300 outline-none text-right tracking-tight"
-                style={{ letterSpacing: '-0.02em' }}
+                placeholder="Email o ID utente"
+                value={recipient}
+                onChange={e => setRecipient(e.target.value)}
+                className="w-full px-4 pb-3 pt-1 text-sm text-neutral-900 placeholder-neutral-300 bg-transparent outline-none"
               />
             </div>
-          </div>
 
-          {/* Exchange Rate */}
-          <div className="flex items-center justify-center gap-2 my-4 text-sm text-foreground/50">
-            <ArrowUpDown className="w-3.5 h-3.5" strokeWidth={2.5} />
-            <span className="font-medium">1 USDT = {exchangeRate} USD</span>
-          </div>
-
-          {/* To Currency */}
-          <div className="mb-5">
-            <div className="bg-white rounded-3xl p-5">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-9 h-9 rounded-full flex items-center justify-center bg-neutral-100 border-2 border-neutral-200">
-                  <span className="text-foreground font-bold text-sm">$</span>
-                </div>
-                <span className="font-medium text-base">USD</span>
-                <ChevronDown className="w-4 h-4 ml-auto text-foreground/40" strokeWidth={2.5} />
+            {/* Amount + Currency row */}
+            <div className="flex gap-3">
+              <div className="flex-1 rounded-2xl border border-neutral-200 bg-white overflow-hidden">
+                <label className="block px-4 pt-3 text-[10px] font-semibold text-neutral-400 uppercase tracking-widest">
+                  Importo
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  placeholder="0.00"
+                  value={amount}
+                  onChange={e => setAmount(e.target.value)}
+                  className="w-full px-4 pb-3 pt-1 text-sm text-neutral-900 placeholder-neutral-300 bg-transparent outline-none"
+                />
               </div>
-              <div className="w-full text-5xl font-['Outfit'] font-light text-neutral-300 text-right tracking-tight" style={{ letterSpacing: '-0.02em' }}>
-                {toAmount}
+
+              {/* Currency picker */}
+              <div className="relative">
+                <button
+                  onClick={() => setShowCurrencyPicker(v => !v)}
+                  className="h-full min-w-[80px] flex items-center justify-between gap-1 px-4 rounded-2xl border border-neutral-200 bg-white text-sm font-semibold text-neutral-800"
+                >
+                  {currency}
+                  <ChevronDown className={`w-4 h-4 text-neutral-400 transition-transform ${showCurrencyPicker ? 'rotate-180' : ''}`} />
+                </button>
+                <AnimatePresence>
+                  {showCurrencyPicker && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -8 }}
+                      className="absolute top-full mt-1 right-0 bg-white border border-neutral-200 rounded-xl shadow-lg z-20 overflow-hidden"
+                    >
+                      {CURRENCIES.map(c => (
+                        <button
+                          key={c}
+                          onClick={() => { setCurrency(c); setShowCurrencyPicker(false); }}
+                          className={`block w-full text-left px-4 py-2.5 text-sm font-medium hover:bg-neutral-50 transition-colors ${c === currency ? 'text-neutral-900 bg-neutral-50' : 'text-neutral-600'}`}
+                        >
+                          {c}
+                        </button>
+                      ))}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
             </div>
-          </div>
 
-          {/* Fee */}
-          <div className="flex items-center justify-between mb-6 px-1">
-            <span className="text-sm text-foreground/50">含手续费</span>
-            <span className="text-sm font-medium text-foreground/70">{fee.toFixed(2)} USDT</span>
-          </div>
+            {/* Fee note */}
+            <p className="text-xs text-neutral-400 px-1">
+              Trasferimenti interni DeePay: <span className="font-semibold text-emerald-600">gratuiti</span> e istantanei.
+            </p>
 
-          {/* Continue Button */}
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={onQuickTransfer}
-            className="w-full bg-black text-white rounded-[20px] py-4 text-base font-medium shadow-sm active:bg-neutral-800 transition-colors"
-          >
-            继续
-          </motion.button>
-        </motion.div>
-      </div>
+            {/* Send button */}
+            <motion.button
+              whileTap={{ scale: 0.97 }}
+              onClick={handleSend}
+              disabled={!isValid || state === 'sending'}
+              className={`w-full flex items-center justify-center gap-2 py-4 rounded-2xl text-sm font-bold transition-colors mt-2 ${
+                isValid
+                  ? 'bg-neutral-900 text-white shadow-sm'
+                  : 'bg-neutral-100 text-neutral-300 cursor-not-allowed'
+              }`}
+            >
+              {state === 'sending' ? (
+                <motion.div
+                  animate={{ rotate: 360 }}
+                  transition={{ repeat: Infinity, duration: 0.8, ease: 'linear' }}
+                  className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full"
+                />
+              ) : (
+                <>
+                  <Send className="w-4 h-4" />
+                  Invia
+                </>
+              )}
+            </motion.button>
+
+            {state === 'error' && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="flex items-center gap-2 px-4 py-3 rounded-xl bg-rose-50 text-rose-700 text-sm"
+              >
+                <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                Trasferimento fallito. Riprova.
+              </motion.div>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
