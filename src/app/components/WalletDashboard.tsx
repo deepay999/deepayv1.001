@@ -106,7 +106,14 @@ function payoutStatusIcon(status: number) {
 }
 
 function payoutStatusLabel(status: number) {
-  return ['Pending', 'Processing', 'Completed', 'Failed', '', '', '', '', '', 'Cancelled'][status] ?? 'Unknown';
+  const labels: Record<number, string> = {
+    0: 'Pending',
+    1: 'Processing',
+    2: 'Completed',
+    3: 'Failed',
+    9: 'Cancelled',
+  };
+  return labels[status] ?? 'Unknown';
 }
 
 function remarkIcon(remark: string, type: 'debit' | 'credit') {
