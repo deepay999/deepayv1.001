@@ -276,5 +276,47 @@ Route::namespace('Api')->name('api.')->group(function () {
 
         Route::get('logout', 'Auth\LoginController@logout');
         Route::post('add-device-token', 'UserController@addDeviceToken');
+
+        // ---------------------------------------------------------------
+        // Wallet (internal ledger)
+        // ---------------------------------------------------------------
+        Route::prefix('wallet')->name('wallet.')->controller('WalletController')->group(function () {
+            Route::get('balance', 'balance')->name('balance');
+            Route::get('ledger', 'ledger')->name('ledger');
+            Route::post('transfer', 'transfer')->name('transfer');
+        });
+
+        // ---------------------------------------------------------------
+        // Swan – IBAN banking
+        // ---------------------------------------------------------------
+        Route::prefix('swan')->name('swan.')->controller('SwanController')->group(function () {
+            Route::get('account', 'account')->name('account');
+            Route::post('account/refresh', 'refresh')->name('account.refresh');
+        });
+
+        // ---------------------------------------------------------------
+        // Airwallex – payments & payouts
+        // ---------------------------------------------------------------
+        Route::prefix('airwallex')->name('airwallex.')->controller('AirwallexController')->group(function () {
+            Route::post('payout', 'initiatePayout')->name('payout.create');
+            Route::get('payouts', 'listPayouts')->name('payout.list');
+            Route::get('payouts/{id}', 'showPayout')->name('payout.show');
+            Route::post('payouts/{id}/sync', 'syncPayout')->name('payout.sync');
+        });
+
+        // ---------------------------------------------------------------
+        // Reward Points (non-cash)
+        // ---------------------------------------------------------------
+        Route::prefix('rewards')->name('rewards.')->controller('RewardPointController')->group(function () {
+            Route::get('balance', 'balance')->name('balance');
+            Route::get('history', 'history')->name('history');
+            Route::post('redeem', 'redeem')->name('redeem');
+        });
     });
+
+    // ---------------------------------------------------------------
+    // Webhook endpoints – no user auth (verified by HMAC signature)
+    // ---------------------------------------------------------------
+    Route::post('swan/webhook', 'SwanController@webhook')->name('swan.webhook');
+    Route::post('airwallex/webhook', 'AirwallexController@webhook')->name('airwallex.webhook');
 });

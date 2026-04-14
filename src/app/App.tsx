@@ -11,6 +11,7 @@ import { AddMoneyModal } from './components/AddMoneyModal';
 import { SplashScreen } from './components/SplashScreen';
 import { PageSwipeTransition } from './components/PageTransition';
 import { ThemeProvider } from './contexts/ThemeContext';
+import { WalletDashboard } from './components/WalletDashboard';
 
 /* ─── nav tab definition ──────────────────────────────────── */
 const TABS = [
@@ -36,7 +37,7 @@ export default function App() {
       case 'home':   return <HomePage onAddMoney={() => setAddMoneyModal(true)} onTransfer={() => setTransferModal(true)} onOpenProfile={() => setShowProfile(true)} />;
       case 'cripto': return <VaultsPage />;   // crypto/assets view
       case 'carte':  return <CardsPage />;
-      case 'assets': return <VaultsPage />;   // full portfolio
+      case 'assets': return <WalletDashboard />;   // ledger-based wallet
       default:       return null;
     }
   };
