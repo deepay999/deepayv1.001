@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Home, Wallet, ArrowLeftRight, Building2, Activity } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { HomePage } from './components/HomePage';
 import { WalletPage } from './components/WalletPage';
 import { TransferPage } from './components/TransferPage';
@@ -14,15 +15,16 @@ import { ThemeProvider } from './contexts/ThemeContext';
 
 /* ─── nav tab definition ──────────────────────────────────── */
 const TABS = [
-  { id: 'home',     icon: Home,            label: 'Home'     },
-  { id: 'wallet',   icon: Wallet,          label: 'Wallet'   },
-  { id: 'transfer', icon: ArrowLeftRight,  label: 'Transfer' },
-  { id: 'iban',     icon: Building2,       label: 'IBAN'     },
-  { id: 'activity', icon: Activity,        label: 'Activity' },
+  { id: 'home',     icon: Home,            labelKey: 'tab.home'     },
+  { id: 'wallet',   icon: Wallet,          labelKey: 'tab.wallet'   },
+  { id: 'transfer', icon: ArrowLeftRight,  labelKey: 'tab.transfer' },
+  { id: 'iban',     icon: Building2,       labelKey: 'tab.iban'     },
+  { id: 'activity', icon: Activity,        labelKey: 'tab.activity' },
 ];
 
 /* ─── App ─────────────────────────────────────────────────── */
 export default function App() {
+  const { t } = useTranslation();
   const [activeTab, setActiveTab]            = useState('home');
   const [showAddMoneyModal, setAddMoneyModal] = useState(false);
   const [showSplash, setShowSplash]           = useState(true);
@@ -102,7 +104,7 @@ export default function App() {
                       <span className={`text-[10px] font-medium relative z-10 transition-colors duration-200 ${
                         isActive ? 'text-neutral-900' : 'text-neutral-400'
                       }`}>
-                        {tab.label}
+                        {t(tab.labelKey)}
                       </span>
                     </motion.button>
                   );
