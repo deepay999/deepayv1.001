@@ -81,6 +81,14 @@ export const resources = {
       Transfer: '转账',
       IBAN: 'IBAN',
       Activity: '活动',
+
+      // Mobile app tab keys (tab.* namespace)
+      'tab.home': '首页',
+      'tab.wallet': '钱包',
+      'tab.transfer': '转账',
+      'tab.iban': 'IBAN',
+      'tab.activity': '活动',
+      'tab.points': '积分',
     },
   },
   en: {
@@ -163,6 +171,14 @@ export const resources = {
       Transfer: 'Transfer',
       IBAN: 'IBAN',
       Activity: 'Activity',
+
+      // Mobile app tab keys (tab.* namespace)
+      'tab.home': 'Home',
+      'tab.wallet': 'Wallet',
+      'tab.transfer': 'Transfer',
+      'tab.iban': 'IBAN',
+      'tab.activity': 'Activity',
+      'tab.points': 'Points',
     },
   },
 } as const;

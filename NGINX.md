@@ -70,15 +70,20 @@ server {
         try_files $uri $uri/ /index.php?$query_string;
     }
 
-    # ── 6. PHP-FPM ───────────────────────────────────────────────
+    # ── 6. Charset — prevents garbled text (乱码) ────────────────
+    charset utf-8;
+    source_charset utf-8;
+
+    # ── 7. PHP-FPM ───────────────────────────────────────────────
     location ~ \.php$ {
         include fastcgi_params;
         fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
         fastcgi_pass unix:/run/php/php8.2-fpm.sock;  # adjust PHP version
         fastcgi_hide_header X-Powered-By;
+        charset utf-8;
     }
 
-    # ── 7. Security ───────────────────────────────────────────────
+    # ── 8. Security ───────────────────────────────────────────────
     location ~ /\.(?!well-known).* { deny all; }
     location ~ /core/storage/       { deny all; }
     location ~ /core/bootstrap/     { deny all; }
@@ -245,6 +250,9 @@ curl -s https://deepay.srl/ | grep -c 'deepay-startup-shell'
 | CSS returning `text/html` | Nginx forwards `.css` to PHP | Add `/assets/` location block and `~* \.css$` static rule |
 | Startup shell stuck | `dist/assets/app.js` not deployed or served as HTML | Run `npm run build` and check Nginx `/dist/` location |
 | `color.php` 404 | PHP-FPM not running or wrong socket path | Check `fastcgi_pass` socket, verify `php8.2-fpm` is active |
+| **Garbled text (乱码)** | Nginx/PHP not sending `charset=utf-8` header | Add `charset utf-8; source_charset utf-8;` to the `server {}` block (see config above) |
+| **Uploaded images missing / broken** | `storage` symlink not created | Run `php index.php artisan storage:link` on the server; the `deploy.sh` now does this automatically |
+| **All images broken (wrong domain)** | `APP_URL` wrong in `.env` | Set `APP_URL=https://deepay.srl` (or `https://www.deepay.srl`) in `core/.env` |
 
 ---
 

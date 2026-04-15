@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Home, Wallet, ArrowLeftRight, Building2, Activity } from 'lucide-react';
+import { Home, Wallet, ArrowLeftRight, Building2, Activity, Star } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { HomePage } from './components/HomePage';
 import { WalletPage } from './components/WalletPage';
@@ -8,24 +8,25 @@ import { TransferPage } from './components/TransferPage';
 import { IBANPage } from './components/IBANPage';
 import { ActivityPage } from './components/ActivityPage';
 import { ProfilePage } from './components/ProfilePage';
+import { PointsPage } from './components/PointsPage';
 import { AddMoneyModal } from './components/AddMoneyModal';
 import { SplashScreen } from './components/SplashScreen';
 import { PageSwipeTransition } from './components/PageTransition';
 import { ThemeProvider } from './contexts/ThemeContext';
 
 /* ─── nav tab definition ──────────────────────────────────── */
-const TAB_DEFS = [
-  { id: 'home',     icon: Home,            labelKey: 'Home'     },
-  { id: 'wallet',   icon: Wallet,          labelKey: 'Wallet'   },
-  { id: 'transfer', icon: ArrowLeftRight,  labelKey: 'Transfer' },
-  { id: 'iban',     icon: Building2,       labelKey: 'IBAN'     },
-  { id: 'activity', icon: Activity,        labelKey: 'Activity' },
+const TABS = [
+  { id: 'home',     icon: Home,           labelKey: 'tab.home'     },
+  { id: 'wallet',   icon: Wallet,         labelKey: 'tab.wallet'   },
+  { id: 'transfer', icon: ArrowLeftRight, labelKey: 'tab.transfer' },
+  { id: 'iban',     icon: Building2,      labelKey: 'tab.iban'     },
+  { id: 'activity', icon: Activity,       labelKey: 'tab.activity' },
+  { id: 'points',   icon: Star,           labelKey: 'tab.points'   },
 ];
 
 /* ─── App ─────────────────────────────────────────────────── */
 export default function App() {
   const { t } = useTranslation();
-  const TABS = TAB_DEFS.map((tab) => ({ ...tab, label: t(tab.labelKey) }));
   const [activeTab, setActiveTab]            = useState('home');
   const [showAddMoneyModal, setAddMoneyModal] = useState(false);
   const [showSplash, setShowSplash]           = useState(true);
@@ -39,6 +40,7 @@ export default function App() {
       case 'transfer': return <TransferPage />;
       case 'iban':     return <IBANPage />;
       case 'activity': return <ActivityPage />;
+      case 'points':   return <PointsPage />;
       default:         return null;
     }
   };
@@ -105,7 +107,7 @@ export default function App() {
                       <span className={`text-[10px] font-medium relative z-10 transition-colors duration-200 ${
                         isActive ? 'text-neutral-900' : 'text-neutral-400'
                       }`}>
-                        {tab.label}
+                        {t(tab.labelKey)}
                       </span>
                     </motion.button>
                   );

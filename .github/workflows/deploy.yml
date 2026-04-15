@@ -121,6 +121,7 @@ jobs:
             done
 
             # Rebuild caches after all assets are in place
+            php index.php artisan storage:link --force 2>/dev/null || true
             php index.php artisan config:cache  2>/dev/null || true
             php index.php artisan route:cache   2>/dev/null || true
             php index.php artisan view:cache    2>/dev/null || true

@@ -1,0 +1,61 @@
+name: Bug Report
+description: File a bug report
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **Before submitting**: search existing issues to avoid duplicates.
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - User (web)
+        - Agent (web)
+        - Merchant (web)
+        - Admin panel
+        - API
+        - Payment IPN / Callback
+        - Authentication / 2FA / OAuth
+        - Other
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: DeePay version (check Admin → About or git log)
+      placeholder: "e.g. 1.6"
+    validations:
+      required: false
+  - type: textarea
+    id: description
+    attributes:
+      label: What happened?
+      description: Describe the bug clearly. Include error messages and log lines (no secrets).
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Go to ...
+        2. Click ...
+        3. See error ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behaviour
+    validations:
+      required: false
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant logs / error messages
+      description: Paste log excerpts here. **Remove all secrets, API keys, and passwords before pasting.**
+      render: shell
+    validations:
+      required: false

@@ -21,6 +21,11 @@ PHP_VERSION="${PHP_VERSION:-8.3}"
 SITE_USER="${SITE_USER:-www}"
 PHP_MAJOR_MINOR="${PHP_VERSION//./}"
 
+# aaPanel / BT Panel paths
+AAPANEL_PHP_POOL_DIR="/www/server/php/${PHP_MAJOR_MINOR}/etc/php-fpm.d"
+AAPANEL_REWRITE_DIR="/www/server/panel/vhost/rewrite"
+AAPANEL_REWRITE_CONF="${AAPANEL_REWRITE_DIR}/${SITE_DOMAIN}.conf"
+
 log "==========================================="
 log " DeePay Emergency open_basedir Fix"
 log " Domain:  $SITE_DOMAIN"
@@ -43,8 +48,9 @@ done
 
 [[ -z "$PHP_FPM_SVC" ]] && fail "No active PHP-FPM service found. Is PHP-FPM installed?"
 
-# Find pool config directories
+# Find pool config directories — aaPanel path takes priority
 POOL_DIRS=(
+    "${AAPANEL_PHP_POOL_DIR}"
     "/etc/php/${PHP_VERSION}/fpm/pool.d"
     "/etc/php-fpm.d"
     "/usr/local/etc/php-fpm.d"
@@ -68,17 +74,18 @@ if [[ -n "$POOL_DIR" ]]; then
     done < <(find "$POOL_DIR" -name "*.conf" -print0 2>/dev/null)
 fi
 
-# Also check aaPanel site config
-AAPANEL_DIRS=(
+# Also check aaPanel site config (avoid duplicate if already in POOL_DIR)
+AAPANEL_EXTRA_DIRS=(
     "/www/server/panel/vhost/php"
-    "/www/server/php/${PHP_MAJOR_MINOR}/etc/php-fpm.d"
 )
-for d in "${AAPANEL_DIRS[@]}"; do
+for d in "${AAPANEL_EXTRA_DIRS[@]}"; do
     [[ -d "$d" ]] || continue
     while IFS= read -r -d '' conf_file; do
         if grep -q "modaui.com" "$conf_file" 2>/dev/null; then
-            BAD_POOLS+=("$conf_file")
-            warn "BAD AAPANEL POOL: $conf_file"
+            # Only add if not already in BAD_POOLS
+            already=false
+            for p in "${BAD_POOLS[@]:-}"; do [[ "$p" == "$conf_file" ]] && already=true && break; done
+            $already || { BAD_POOLS+=("$conf_file"); warn "BAD AAPANEL POOL: $conf_file"; }
         fi
     done < <(find "$d" -name "*.conf" -print0 2>/dev/null)
 done
@@ -117,17 +124,23 @@ SESSION_DIR="/www/php_session/${SITE_DOMAIN}"
 mkdir -p "$SESSION_DIR"
 chown -R "${SITE_USER}:${SITE_USER}" "$SESSION_DIR" 2>/dev/null || true
 
+# Use a site-dedicated socket so deepay.srl does NOT share modaui.com's socket.
+# The dedicated socket name avoids the open_basedir collision entirely.
+DEEPAY_SOCK="/tmp/php-cgi-deepay.sock"
+
 if [[ -n "$POOL_DIR" ]]; then
     CORRECT_POOL="${POOL_DIR}/${SITE_DOMAIN}.conf"
     log "Writing correct pool config to $CORRECT_POOL..."
     cat > "$CORRECT_POOL" <<POOLEOF
 ; PHP-FPM pool for ${SITE_DOMAIN}
 ; Fixed by deploy/fix-server.sh on $(date)
+; Uses a dedicated socket — does NOT share /tmp/php-cgi-${PHP_MAJOR_MINOR}.sock
+; with other sites (e.g. modaui.com) to avoid open_basedir cross-contamination.
 [${SITE_DOMAIN}]
 user  = ${SITE_USER}
 group = ${SITE_USER}
 
-listen = /tmp/php-cgi-${PHP_MAJOR_MINOR}.sock
+listen = ${DEEPAY_SOCK}
 listen.owner = ${SITE_USER}
 listen.group = ${SITE_USER}
 listen.mode  = 0660
@@ -140,24 +153,97 @@ pm.max_spare_servers = 8
 pm.max_requests      = 500
 
 ; CORRECTED: open_basedir now points to THIS site only
-php_admin_value[open_basedir]      = ${DEPLOY_PATH}/:/tmp/:/www/php_session/${SITE_DOMAIN}/
-php_admin_value[session.save_path] = ${SESSION_DIR}/
-php_admin_value[upload_tmp_dir]    = /tmp/
-php_admin_flag[display_errors]     = off
-php_admin_value[memory_limit]      = 256M
+php_admin_value[open_basedir]       = ${DEPLOY_PATH}/:/tmp/:/www/php_session/${SITE_DOMAIN}/
+php_admin_value[session.save_path]  = ${SESSION_DIR}/
+php_admin_value[upload_tmp_dir]     = /tmp/
+php_admin_flag[display_errors]      = off
+php_admin_value[error_log]          = /www/wwwlogs/${SITE_DOMAIN}.php.error.log
+php_admin_value[memory_limit]       = 256M
 php_admin_value[max_execution_time] = 120
-php_admin_value[post_max_size]     = 64M
-php_admin_value[upload_max_filesize] = 32M
+php_admin_value[post_max_size]      = 64M
+php_admin_value[upload_max_filesize]= 32M
 POOLEOF
-    ok "Pool config written."
+    ok "Pool config written (socket: ${DEEPAY_SOCK})."
 fi
 
-# ── 5. Reload PHP-FPM ─────────────────────────────────────────────────────────
-log "Reloading PHP-FPM ($PHP_FPM_SVC)..."
-systemctl reload "$PHP_FPM_SVC" && ok "PHP-FPM reloaded." || {
-    warn "Reload failed — trying restart..."
-    systemctl restart "$PHP_FPM_SVC" && ok "PHP-FPM restarted."
+# ── 5. Patch nginx to use the dedicated socket ────────────────────────────────
+# aaPanel's enable-php-83.conf uses the shared /tmp/php-cgi-83.sock (modaui.com's
+# pool). We inject a site-level override in the aaPanel extension directory so that
+# requests to www.deepay.srl go to the dedicated deepay pool socket instead.
+NGINX_EXT_DIR="/www/server/panel/vhost/nginx/extension/${SITE_DOMAIN}"
+mkdir -p "$NGINX_EXT_DIR"
+NGINX_PHP_OVERRIDE="${NGINX_EXT_DIR}/php-pool-override.conf"
+log "Writing nginx PHP socket override → $NGINX_PHP_OVERRIDE..."
+cat > "$NGINX_PHP_OVERRIDE" <<NGINXEOF
+# Override the default enable-php-83.conf socket for ${SITE_DOMAIN}.
+# This routes PHP requests to the dedicated pool that has the correct open_basedir.
+location ~ [^/]\.php(/|\$) {
+    try_files \$uri =404;
+    fastcgi_pass  unix:${DEEPAY_SOCK};
+    fastcgi_index index.php;
+    include       fastcgi.conf;
+    include       pathinfo.conf;
+    fastcgi_read_timeout 120;
 }
+NGINXEOF
+ok "Nginx PHP socket override written."
+
+# ── 6. Write Laravel rewrite rule (fixes 404 for all non-static routes) ──────
+# aaPanel stores per-site rewrite rules in this file. Without the try_files line,
+# every request that is not a real file returns nginx 404.
+log "Writing Laravel rewrite rule → $AAPANEL_REWRITE_CONF..."
+mkdir -p "$AAPANEL_REWRITE_DIR"
+
+# Back up existing file if present
+[[ -f "$AAPANEL_REWRITE_CONF" ]] && \
+    cp -f "$AAPANEL_REWRITE_CONF" "${AAPANEL_REWRITE_CONF}.bak.$(date +%Y%m%d%H%M%S)"
+
+cat > "$AAPANEL_REWRITE_CONF" <<'REWRITEEOF'
+# Laravel / React SPA URL rewriting for www.deepay.srl
+# Generated by deploy/fix-server.sh
+
+# Serve pre-built React bundle as static files (correct MIME, long cache)
+location /dist/ {
+    try_files $uri =404;
+    expires 1y;
+    add_header Cache-Control "public, max-age=31536000, immutable";
+    add_header X-Content-Type-Options "nosniff";
+}
+
+# Serve Laravel template assets as static files
+location /assets/ {
+    try_files $uri =404;
+    expires 30d;
+    add_header Cache-Control "public, max-age=2592000";
+    add_header X-Content-Type-Options "nosniff";
+}
+
+# PWA files — no caching so updates are instant
+location = /sw.js {
+    try_files $uri =404;
+    add_header Cache-Control "no-cache, no-store, must-revalidate";
+    add_header Service-Worker-Allowed "/";
+}
+location = /manifest.json {
+    try_files $uri =404;
+    add_header Cache-Control "no-cache";
+}
+
+# Laravel front-controller: every other request goes through index.php
+location / {
+    try_files $uri $uri/ /index.php?$query_string;
+}
+REWRITEEOF
+ok "Laravel rewrite conf written."
+
+# ── 7. Test and reload nginx ──────────────────────────────────────────────────
+log "Testing nginx config..."
+if nginx -t 2>/dev/null; then
+    systemctl reload nginx && ok "Nginx reloaded." || warn "Nginx reload failed — check config."
+else
+    warn "Nginx config test FAILED — not reloading. Fix the config manually."
+    nginx -t
+fi
 
 # ── 6. Verify fix ─────────────────────────────────────────────────────────────
 log "Verifying fix..."

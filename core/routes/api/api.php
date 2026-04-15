@@ -41,6 +41,9 @@ Route::namespace('Api')->name('api.')->group(function () {
             Route::post('password/verify-code', 'verifyCode');
             Route::post('password/reset', 'reset');
         });
+
+        // Social / OAuth login (user) — client sends provider access token, receives Sanctum token
+        Route::post('oauth/{provider}', 'OAuthController');
     });
 
     Route::middleware('auth:sanctum', 'token.permission:user_token')->group(function () {
@@ -265,6 +268,12 @@ Route::namespace('Api')->name('api.')->group(function () {
             Route::controller('BankController')->prefix('banks')->middleware(['module:bank_transfer', 'kyc'])->group(function () {
                 Route::get('/', 'index');
                 Route::get('{id}', 'show');
+            });
+
+            // Points
+            Route::controller('PointController')->prefix('points')->group(function () {
+                Route::get('/', 'index');
+                Route::post('reward', 'reward');
             });
 
             //Investment

@@ -135,7 +135,14 @@ else
   warn "Skipping migrations (--skip-migrate)."
 fi
 
-# ── 9. Clear and rebuild caches ───────────────────────────────────────────────
+# ── 9. Storage symlink (required for uploaded images) ─────────────────────────
+log "Creating storage symlink..."
+cd "$DEPLOY_PATH"
+"$PHP_BIN" index.php artisan storage:link --force 2>/dev/null \
+  && ok "Storage symlink created/verified." \
+  || warn "storage:link failed — uploaded images may not display."
+
+# ── 10. Clear and rebuild caches ──────────────────────────────────────────────
 if [[ "$SKIP_CACHE" == "false" ]]; then
   log "Rebuilding caches..."
   cd "$DEPLOY_PATH"
@@ -151,7 +158,7 @@ else
   warn "Skipping cache rebuild (--skip-cache)."
 fi
 
-# ── 10. Reload PHP-FPM ───────────────────────────────────────────────────────
+# ── 11. Reload PHP-FPM ───────────────────────────────────────────────────────
 log "Reloading PHP-FPM..."
 for svc in php8.3-fpm php8.2-fpm php8.1-fpm php-fpm php83 php82; do
   if systemctl is-active --quiet "$svc" 2>/dev/null; then
@@ -159,7 +166,7 @@ for svc in php8.3-fpm php8.2-fpm php8.1-fpm php-fpm php83 php82; do
   fi
 done
 
-# ── 11. Done ──────────────────────────────────────────────────────────────────
+# ── 12. Done ──────────────────────────────────────────────────────────────────
 echo ""
 ok "============================================================="
 ok " Deploy complete: $(git -C "$DEPLOY_PATH" log -1 --oneline)"

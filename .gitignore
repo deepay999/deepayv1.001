@@ -44,6 +44,7 @@ core/.phpunit.result.cache
 # ── Temporary / upload artifacts ─────────────────────────────────────────────
 DEEPAY-ww.zip
 guidelines.zip
+*.zip
 src/imports/
 
 # ── Compiled / generated ──────────────────────────────────────────────────────
