@@ -38,7 +38,11 @@ class GeneralSetting extends Model
         'system_customized'     => 'integer',
         'currency_format'       => 'integer',
         'user_pin_digits'       => 'integer',
-        'qrcode_login'          => 'integer'
+        'qrcode_login'          => 'integer',
+        'loyalty_points'        => 'integer',
+        'points_per_currency'   => 'double',
+        'points_value'          => 'double',
+        'min_redeem_points'     => 'integer',
     ];
 
     protected $hidden = ['email_template', 'mail_config', 'sms_config', 'system_info'];

@@ -1,8 +1,10 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import './styles/index.css';
+import './i18n/i18n';
 import App from './app/App';
 import DeepayLandingPage from './app/pages/DeepayLandingPage';
+import { LanguageProvider } from './i18n/LanguageProvider';
 
 /**
  * Device detection: mobile users get the banking app, desktop users get the landing page.
@@ -28,7 +30,9 @@ function mountApp() {
     const mobile = isMobileDevice();
     root.render(
       <StrictMode>
-        {mobile ? <App /> : <DeepayLandingPage />}
+        <LanguageProvider>
+          {mobile ? <App /> : <DeepayLandingPage />}
+        </LanguageProvider>
       </StrictMode>,
     );
 

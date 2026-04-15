@@ -177,29 +177,43 @@ class SiteController extends Controller
 
     public function placeholderImage($size = null)
     {
-        $imgWidth  = explode('x', $size)[0];
-        $imgHeight = explode('x', $size)[1];
-        $text      = $imgWidth . '×' . $imgHeight;
-        $fontFile  = realpath('assets/font/solaimanLipi_bold.ttf');
-        $fontSize  = round(($imgWidth - 50) / 8);
-        if ($fontSize <= 9) {
-            $fontSize = 9;
-        }
-        if ($imgHeight < 100 && $fontSize > 30) {
-            $fontSize = 30;
-        }
+        $imgWidth  = (int) (explode('x', $size)[0] ?? 100);
+        $imgHeight = (int) (explode('x', $size)[1] ?? 100);
+        if ($imgWidth < 1)  $imgWidth  = 100;
+        if ($imgHeight < 1) $imgHeight = 100;
+
+        $text     = $imgWidth . '×' . $imgHeight;
+        $fontSize = round(($imgWidth - 50) / 8);
+        if ($fontSize <= 9)                          $fontSize = 9;
+        if ($imgHeight < 100 && $fontSize > 30)      $fontSize = 30;
 
         $image     = imagecreatetruecolor($imgWidth, $imgHeight);
         $colorFill = imagecolorallocate($image, 100, 100, 100);
-        $bgFill    = imagecolorallocate($image, 255, 255, 255);
+        $bgFill    = imagecolorallocate($image, 220, 220, 220);
         imagefill($image, 0, 0, $bgFill);
-        $textBox    = imagettfbbox($fontSize, 0, $fontFile, $text);
-        $textWidth  = abs($textBox[4] - $textBox[0]);
-        $textHeight = abs($textBox[5] - $textBox[1]);
-        $textX      = ($imgWidth - $textWidth) / 2;
-        $textY      = ($imgHeight + $textHeight) / 2;
+
+        // Resolve font path relative to the project root (one level above core/)
+        $fontFile = realpath(__DIR__ . '/../../../../assets/font/solaimanLipi_bold.ttf');
+
         header('Content-Type: image/jpeg');
-        imagettftext($image, $fontSize, 0, $textX, $textY, $colorFill, $fontFile, $text);
+
+        if ($fontFile && file_exists($fontFile)) {
+            $textBox    = imagettfbbox($fontSize, 0, $fontFile, $text);
+            $textWidth  = abs($textBox[4] - $textBox[0]);
+            $textHeight = abs($textBox[5] - $textBox[1]);
+            $textX      = ($imgWidth - $textWidth) / 2;
+            $textY      = ($imgHeight + $textHeight) / 2;
+            imagettftext($image, $fontSize, 0, (int)$textX, (int)$textY, $colorFill, $fontFile, $text);
+        } else {
+            // Fallback: built-in GD font — no external file required
+            $builtinSize = ($fontSize >= 16) ? 4 : (($fontSize >= 12) ? 3 : 2);
+            $charW  = imagefontwidth($builtinSize);
+            $charH  = imagefontheight($builtinSize);
+            $textX  = (int)(($imgWidth  - $charW  * strlen($text)) / 2);
+            $textY  = (int)(($imgHeight - $charH) / 2);
+            imagestring($image, $builtinSize, $textX, $textY, $text, $colorFill);
+        }
+
         imagejpeg($image);
         imagedestroy($image);
     }

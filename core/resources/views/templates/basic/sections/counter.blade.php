@@ -34,6 +34,10 @@
     <script>
         "use strict";
         (function($) {
+            if (typeof $.fn.isInViewport === 'undefined') {
+                console.warn('[DeePay] viewport.jquery.js not loaded — counter animation skipped.');
+                return;
+            }
             $(".counter-item").each(function() {
                 $(this).isInViewport(function(status) {
                     if (status === "entered") {

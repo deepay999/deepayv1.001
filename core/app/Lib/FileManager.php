@@ -73,6 +73,16 @@ class FileManager
 
 
     /**
+     * Dangerous file extensions that must never be uploaded.
+     * This is a hard blocklist regardless of MIME type.
+     */
+    private const BLOCKED_EXTENSIONS = [
+        'php', 'php3', 'php4', 'php5', 'php7', 'php8', 'phtml', 'phar',
+        'asp', 'aspx', 'jsp', 'jspx', 'cfm', 'cgi', 'pl', 'py', 'sh',
+        'bash', 'exe', 'bat', 'cmd', 'com', 'htaccess', 'htpasswd',
+    ];
+
+    /**
      * Set the file and file type to properties if exist
      *
      * @param $file
@@ -82,12 +92,15 @@ class FileManager
     {
         $this->file = $file;
         if ($file) {
-            $imageExtensions = ['jpg', 'jpeg', 'png', 'JPG', 'JPEG', 'PNG'];
-            if (in_array($file->getClientOriginalExtension(), $imageExtensions)) {
-                $this->isImage = true;
-            } else {
-                $this->isImage = false;
+            $ext = strtolower($file->getClientOriginalExtension());
+
+            // Hard-block dangerous extensions regardless of MIME type
+            if (in_array($ext, self::BLOCKED_EXTENSIONS)) {
+                throw new \Exception('File type not permitted.');
             }
+
+            $imageExtensions = ['jpg', 'jpeg', 'png'];
+            $this->isImage = in_array($ext, $imageExtensions);
         }
     }
     /**

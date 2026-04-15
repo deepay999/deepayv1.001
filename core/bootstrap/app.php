@@ -2,6 +2,7 @@
 
 use App\Http\Exception\ExceptionHandler;
 use App\Http\Middleware\Authenticate;
+use App\Http\Middleware\AdminForce2FA;
 use App\Http\Middleware\CheckStatus;
 use App\Http\Middleware\KycMiddleware;
 use App\Http\Middleware\MaintenanceMode;
@@ -96,6 +97,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'admin'       => RedirectIfNotAdmin::class,
             'admin.guest' => RedirectIfAdmin::class,
+            'admin.2fa'   => AdminForce2FA::class,
 
             'agent'       => RedirectIfNotAgent::class,
             'agent.guest' => RedirectIfAgent::class,

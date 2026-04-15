@@ -43,16 +43,33 @@ class ProcessController extends Controller
 
     public function ipn()
     {
-        $deposit = Deposit::where('trx', $_POST['transaction_id'])->orderBy('id', 'DESC')->first();
-        $skrillrAcc = json_decode($deposit->gatewayCurrency()->gateway_parameter);
-        $concatFields = $_POST['merchant_id']
-            . $_POST['transaction_id']
-            . strtoupper(md5($skrillrAcc->secret_key))
-            . $_POST['mb_amount']
-            . $_POST['mb_currency']
-            . $_POST['status'];
+        $post = request()->post();
 
-        if (strtoupper(md5($concatFields)) == $_POST['md5sig'] && $_POST['status'] == 2 && $_POST['pay_to_email'] == $skrillrAcc->pay_to_email && $deposit->status = Status::PAYMENT_INITIATE) {
+        if (empty($post['transaction_id'])) {
+            abort(400);
+        }
+
+        $deposit = Deposit::where('trx', $post['transaction_id'])->orderBy('id', 'DESC')->first();
+        if (!$deposit || $deposit->status != Status::PAYMENT_INITIATE) {
+            return;
+        }
+
+        $skrillrAcc = json_decode($deposit->gatewayCurrency()->gateway_parameter);
+        $concatFields = ($post['merchant_id'] ?? '')
+            . ($post['transaction_id'] ?? '')
+            . strtoupper(md5($skrillrAcc->secret_key))
+            . ($post['mb_amount'] ?? '')
+            . ($post['mb_currency'] ?? '')
+            . ($post['status'] ?? '');
+
+        $md5sig   = $post['md5sig'] ?? '';
+        $status   = $post['status'] ?? '';
+        $payEmail = $post['pay_to_email'] ?? '';
+
+        if (hash_equals(strtoupper(md5($concatFields)), strtoupper($md5sig))
+            && $status == 2
+            && $payEmail === $skrillrAcc->pay_to_email
+        ) {
             PaymentController::userDataUpdate($deposit);
         }
     }
