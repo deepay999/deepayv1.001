@@ -105,6 +105,70 @@ const en: Record<string, string> = {
   /* ── Language dropdown ── */
   'lang.zh': '中文',
   'lang.en': 'English',
+
+  /* ── Landing page nav ── */
+  'Discover':        'Discover',
+  'Pricing plan':    'Pricing plan',
+  'Login':           'Login',
+  'Sign up':         'Sign up',
+
+  /* ── Landing page hero (Section 1) ── */
+  'Take control of your money': 'Take control of your money',
+  'Current account':            'Current account',
+  'VISA card':                  'VISA card',
+  'Crypto wallet':              'Crypto wallet',
+
+  /* ── Landing page Section 2 ── */
+  'Join hundreds of thousands of users': 'Join hundreds of thousands of users',
+
+  /* ── Landing page Section 3 ── */
+  'Forget your bank account': 'Forget your bank account',
+  'DeePay provides: IBAN, cards, instant bank transfers, fiat & crypto exchange — all free with zero bank fees.':
+    'DeePay provides: IBAN, cards, instant bank transfers, fiat & crypto exchange — all free with zero bank fees.',
+
+  /* ── Landing page Section 4 ── */
+  'Stand out with a unique debit card': 'Stand out with a unique debit card!',
+  'Pay worldwide, bind Alipay & WeChat': 'Pay worldwide, connect Alipay & WeChat',
+
+  /* ── Landing page Section 5 ── */
+  'Deposit your crypto with no limits': 'Deposit your crypto with no limits',
+  'Deposit and withdraw crypto without any restrictions. Convert to EUR or other crypto anytime.':
+    'Deposit and withdraw crypto without any restrictions. Convert to EUR or other crypto anytime.',
+
+  /* ── Landing page Section 6 ── */
+  'We keep you protected': 'We keep you protected',
+  '24/7 AI support with human agents available when you need them':
+    '24/7 AI support with human agents available when you need them',
+
+  /* ── Landing page footer brand ── */
+  'The digital finance app for everyone.': 'The digital finance app for everyone.',
+
+  /* ── Landing page footer columns ── */
+  'Company':     'Company',
+  'Home':        'Home',
+  'About':       'About',
+  'Press':       'Press',
+  'Career':      'Career',
+  'Ambassadors': 'Ambassadors',
+  'Verify':      'Verify',
+  'Status':      'Status',
+  'Product':     'Product',
+  'Features':    'Features',
+  'Business':    'Business',
+  'Bursted Bubbles': 'Bursted Bubbles',
+  'Crypto Market':   'Crypto Market',
+  'Exchange':    'Exchange',
+  'Suggestions': 'Suggestions',
+  'Help':        'Help',
+  'Contact':     'Contact',
+  'Twitter':     'Twitter',
+  'FAQ':         'FAQ',
+  'Legal & Compliance': 'Legal & Compliance',
+  'Legal Agreements':   'Legal Agreements',
+  'Website terms':      'Website terms',
+  'Privacy':            'Privacy',
+  'All rights reserved.': 'All rights reserved.',
+  'Services operational': 'Services operational',
 };
 
 export default en;

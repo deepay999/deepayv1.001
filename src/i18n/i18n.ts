@@ -1,32 +1,34 @@
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
+import { resources } from './fallback';
 
-// Examples of language resources
-const resources = {
-  zh: {
-    translation: {
-      Home: '首页',
-      Wallet: '钱包',
-      Transfer: '转账',
-      IBAN: '国际银行账号',
-      Activity: '活动'
-    }
-  },
-  en: {
-    translation: {} // Placeholder for fetching from the API
+const STORAGE_KEY = 'deepay_lang';
+
+function getInitialLanguage(): string {
+  try {
+    return localStorage.getItem(STORAGE_KEY) ?? 'zh';
+  } catch {
+    return 'zh';
   }
-};
+}
 
-// Initialize i18n
-i18n
-  .use(initReactI18next) // passes i18n down to react-i18next
-  .init({
-    resources,
-    lng: localStorage.getItem('language') || 'zh',
-    fallbackLng: 'zh',
-    interpolation: {
-      escapeValue: false // react already safes from xss
-    }
-  });
+i18n.use(initReactI18next).init({
+  resources,
+  lng: getInitialLanguage(),
+  fallbackLng: 'zh',
+  interpolation: {
+    escapeValue: false,
+  },
+});
+
+/** Persist language choice and change i18n language */
+export function setLanguage(lang: string): void {
+  try {
+    localStorage.setItem(STORAGE_KEY, lang);
+  } catch {
+    // ignore
+  }
+  void i18n.changeLanguage(lang);
+}
 
 export default i18n;
