@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { motion, useInView, useScroll, useTransform } from 'motion/react';
+import { useTranslation } from 'react-i18next';
 import {
   ArrowRight,
   Shield,
@@ -14,6 +15,7 @@ import {
   Menu,
   X,
 } from 'lucide-react';
+import { LanguageDropdown } from '../components/LanguageDropdown';
 
 /* ─────────────────────────── helpers ─────────────────────── */
 
@@ -38,73 +40,25 @@ function useCountUp(target: number, duration = 2000, start = false) {
 
 /* ─────────────────────────── data ────────────────────────── */
 
-const FEATURES = [
-  {
-    icon: Zap,
-    title: 'Pagamenti istantanei',
-    description:
-      'Bonifici SEPA in tempo reale e pagamenti internazionali elaborati in pochi secondi, 24/7 — inclusi sabato, domenica e festivi.',
-    color: '#10B981',
-  },
-  {
-    icon: CreditCard,
-    title: 'Carte aziendali',
-    description:
-      'Emetti carte fisiche e virtuali per ogni dipendente con limiti personalizzati, categorie di spesa e rendiconto automatico.',
-    color: '#3B82F6',
-  },
-  {
-    icon: Globe,
-    title: 'Copertura europea',
-    description:
-      `Opera in oltre 30 paesi dell'Area Euro con conti multi-valuta, conversione automatica e conformità PSD2 integrata.`,
-    color: '#8B5CF6',
-  },
-  {
-    icon: Shield,
-    title: 'Sicurezza enterprise',
-    description:
-      'Autenticazione forte, monitoraggio antifrode in tempo reale e architettura zero-trust conforme alle direttive EBA.',
-    color: '#F59E0B',
-  },
-  {
-    icon: Building2,
-    title: 'API e integrazioni',
-    description:
-      'REST API documentate, webhook e connettori nativi per SAP, Oracle, Salesforce e i principali ERP italiani.',
-    color: '#EF4444',
-  },
-  {
-    icon: TrendingUp,
-    title: 'Analytics avanzate',
-    description:
-      'Dashboard in tempo reale con previsioni di cash-flow, riconciliazione automatica e report pronti per la reportistica fiscale italiana.',
-    color: '#10B981',
-  },
+const FEATURE_DEFS = [
+  { icon: Zap,       color: '#10B981', titleKey: 'feature.instant_payments.title', descKey: 'feature.instant_payments.desc' },
+  { icon: CreditCard,color: '#3B82F6', titleKey: 'feature.corporate_cards.title',  descKey: 'feature.corporate_cards.desc'  },
+  { icon: Globe,     color: '#8B5CF6', titleKey: 'feature.european_coverage.title',descKey: 'feature.european_coverage.desc'},
+  { icon: Shield,    color: '#F59E0B', titleKey: 'feature.enterprise_security.title',descKey: 'feature.enterprise_security.desc'},
+  { icon: Building2, color: '#EF4444', titleKey: 'feature.api.title',              descKey: 'feature.api.desc'              },
+  { icon: TrendingUp,color: '#10B981', titleKey: 'feature.analytics.title',        descKey: 'feature.analytics.desc'        },
 ];
 
-const HOW_IT_WORKS = [
-  {
-    step: '01',
-    title: 'Apri il conto',
-    description: 'Registrazione digitale in meno di 10 minuti. KYC online senza appuntamenti in filiale.',
-  },
-  {
-    step: '02',
-    title: 'Collega la tua azienda',
-    description: 'Importa il piano dei conti, collega il gestionale e invita il team con ruoli granulari.',
-  },
-  {
-    step: '03',
-    title: 'Inizia a pagare',
-    description: `Emetti pagamenti, approva spese e monitora il cash-flow da un'unica piattaforma.`,
-  },
+const HOW_IT_WORKS_DEFS = [
+  { step: '01', titleKey: 'how.step1.title', descKey: 'how.step1.desc' },
+  { step: '02', titleKey: 'how.step2.title', descKey: 'how.step2.desc' },
+  { step: '03', titleKey: 'how.step3.title', descKey: 'how.step3.desc' },
 ];
 
 const KPI_DATA = [
-  { value: 2.4, suffix: 'Mld €', label: 'Volume pagamenti annuo', icon: TrendingUp },
-  { value: 30, suffix: '+', label: 'Paesi europei coperti', icon: Globe },
-  { value: 0.7, suffix: 's', label: 'Tempo medio autorizzazione', icon: Clock },
+  { value: 2.4, suffix: 'Mld €', labelKey: 'kpi.volume_label',    icon: TrendingUp },
+  { value: 30,  suffix: '+',     labelKey: 'kpi.countries_label',  icon: Globe      },
+  { value: 0.7, suffix: 's',     labelKey: 'kpi.auth_label',       icon: Clock      },
 ];
 
 /* ─────────────────────────── sub-components ──────────────── */
@@ -116,6 +70,7 @@ function KpiCard({
   kpi: (typeof KPI_DATA)[0];
   index: number;
 }) {
+  const { t } = useTranslation();
   const ref = useRef<HTMLDivElement>(null);
   const inView = useInView(ref, { once: true, margin: '-80px' });
   const count = useCountUp(kpi.value * 10, 1800, inView);
@@ -135,7 +90,7 @@ function KpiCard({
         {displayed}
         <span className="text-emerald-400 ml-1">{kpi.suffix}</span>
       </div>
-      <p className="text-sm text-white/50 uppercase tracking-widest">{kpi.label}</p>
+      <p className="text-sm text-white/50 uppercase tracking-widest">{t(kpi.labelKey)}</p>
     </motion.div>
   );
 }
@@ -144,9 +99,10 @@ function FeatureCard({
   feature,
   index,
 }: {
-  feature: (typeof FEATURES)[0];
+  feature: (typeof FEATURE_DEFS)[0];
   index: number;
 }) {
+  const { t } = useTranslation();
   const ref = useRef<HTMLDivElement>(null);
   const inView = useInView(ref, { once: true, margin: '-60px' });
   const Icon = feature.icon;
@@ -165,8 +121,8 @@ function FeatureCard({
       >
         <Icon className="w-5 h-5" style={{ color: feature.color }} />
       </div>
-      <h3 className="font-['Outfit'] text-lg font-semibold text-white mb-2">{feature.title}</h3>
-      <p className="text-sm leading-relaxed text-white/55">{feature.description}</p>
+      <h3 className="font-['Outfit'] text-lg font-semibold text-white mb-2">{t(feature.titleKey)}</h3>
+      <p className="text-sm leading-relaxed text-white/55">{t(feature.descKey)}</p>
     </motion.div>
   );
 }
@@ -177,9 +133,10 @@ function HowItWorksStep({
   item,
   index,
 }: {
-  item: (typeof HOW_IT_WORKS)[0];
+  item: (typeof HOW_IT_WORKS_DEFS)[0];
   index: number;
 }) {
+  const { t } = useTranslation();
   const ref = useRef<HTMLDivElement>(null);
   const inView = useInView(ref, { once: true, margin: '-60px' });
   return (
@@ -193,8 +150,8 @@ function HowItWorksStep({
       <div className="font-['Outfit'] text-6xl font-bold text-white/8 mb-6 select-none">
         {item.step}
       </div>
-      <h3 className="font-['Outfit'] text-xl font-semibold mb-3">{item.title}</h3>
-      <p className="text-white/50 leading-relaxed">{item.description}</p>
+      <h3 className="font-['Outfit'] text-xl font-semibold mb-3">{t(item.titleKey)}</h3>
+      <p className="text-white/50 leading-relaxed">{t(item.descKey)}</p>
     </motion.div>
   );
 }
@@ -202,6 +159,7 @@ function HowItWorksStep({
 /* ─────────────────────────── main page ───────────────────── */
 
 export default function DeepayLandingPage() {
+  const { t } = useTranslation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const heroRef = useRef<HTMLElement>(null);
   const { scrollYProgress } = useScroll({ target: heroRef, offset: ['start start', 'end start'] });
@@ -239,41 +197,50 @@ export default function DeepayLandingPage() {
 
           {/* Desktop nav */}
           <nav className="hidden md:flex items-center gap-1">
-            {['Prodotto', 'Sicurezza', 'Prezzi', 'Blog'].map((item) => (
+            {[
+              { key: 'nav.product', href: '#prodotto' },
+              { key: 'nav.security', href: '#sicurezza' },
+              { key: 'nav.pricing', href: '#prezzi' },
+              { key: 'nav.blog', href: '#blog' },
+            ].map((item) => (
               <a
-                key={item}
-                href={`#${item.toLowerCase()}`}
+                key={item.key}
+                href={item.href}
                 className="px-4 py-2 text-sm text-white/60 hover:text-white rounded-lg hover:bg-white/5 transition-all duration-200"
               >
-                {item}
+                {t(item.key)}
               </a>
             ))}
           </nav>
 
           {/* Desktop CTAs */}
           <div className="hidden md:flex items-center gap-3">
+            <LanguageDropdown theme="dark" />
             <a
               href="/user/login"
               className="px-4 py-2 text-sm text-white/70 hover:text-white transition-colors duration-200"
             >
-              Accedi
+              {t('nav.login')}
             </a>
             <a
               href="/user/register"
               className="px-5 py-2.5 text-sm font-semibold bg-white text-black rounded-full hover:bg-white/90 transition-all duration-200 shadow-lg shadow-black/20"
             >
-              Apri conto gratuito
+              {t('nav.register')}
             </a>
           </div>
 
           {/* Mobile menu toggle */}
-          <button
-            className="md:hidden p-2 rounded-lg hover:bg-white/10 transition-colors"
-            onClick={() => setMobileMenuOpen((v) => !v)}
-            aria-label="Apri menu"
-          >
-            {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-          </button>
+          <div className="md:hidden flex items-center gap-2">
+            <LanguageDropdown theme="dark" />
+            <button
+              className="p-2 rounded-lg hover:bg-white/10 transition-colors"
+              onClick={() => setMobileMenuOpen((v) => !v)}
+              aria-label={t('nav.openMenu')}
+            >
+              {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            </button>
+          </div>
         </div>
 
         {/* Mobile menu drawer */}
@@ -284,26 +251,31 @@ export default function DeepayLandingPage() {
             className="md:hidden mt-2 mx-0 rounded-2xl border border-white/10 bg-[#111]/95 backdrop-blur-xl p-4"
           >
             <nav className="flex flex-col gap-1 mb-4">
-              {['Prodotto', 'Sicurezza', 'Prezzi', 'Blog'].map((item) => (
+              {[
+                { key: 'nav.product', href: '#prodotto' },
+                { key: 'nav.security', href: '#sicurezza' },
+                { key: 'nav.pricing', href: '#prezzi' },
+                { key: 'nav.blog', href: '#blog' },
+              ].map((item) => (
                 <a
-                  key={item}
-                  href={`#${item.toLowerCase()}`}
+                  key={item.key}
+                  href={item.href}
                   className="px-4 py-3 text-sm text-white/70 hover:text-white rounded-xl hover:bg-white/5 transition-all"
                   onClick={() => setMobileMenuOpen(false)}
                 >
-                  {item}
+                  {t(item.key)}
                 </a>
               ))}
             </nav>
             <div className="flex flex-col gap-2 pt-4 border-t border-white/8">
               <a href="/user/login" className="px-4 py-3 text-sm text-center text-white/70 hover:text-white transition-colors">
-                Accedi
+                {t('nav.login')}
               </a>
               <a
                 href="/user/register"
                 className="px-4 py-3 text-sm font-semibold text-center bg-white text-black rounded-full hover:bg-white/90 transition-all"
               >
-                Apri conto gratuito
+                {t('nav.register')}
               </a>
             </div>
           </motion.div>
@@ -347,7 +319,7 @@ export default function DeepayLandingPage() {
             className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-emerald-500/30 bg-emerald-500/10 text-emerald-400 text-sm font-medium mb-8"
           >
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-            Conformità PSD2 · Regolato Banca d'Italia
+            {t('hero.badge')}
           </motion.div>
 
           {/* Headline */}
@@ -357,14 +329,18 @@ export default function DeepayLandingPage() {
             transition={{ duration: 0.7, delay: 0.2, ease: [0.4, 0, 0.2, 1] }}
             className="font-['Outfit'] text-5xl md:text-7xl lg:text-8xl font-bold tracking-tight leading-[0.95] mb-8"
           >
-            Il futuro dei{' '}
+            {t('hero.headline1')}{' '}
             <span className="relative inline-block">
               <span className="bg-gradient-to-r from-emerald-400 via-emerald-300 to-teal-400 bg-clip-text text-transparent">
-                pagamenti
+                {t('hero.headline2')}
               </span>
             </span>
-            <br />
-            aziendali
+            {t('hero.headline3') && (
+              <>
+                <br />
+                {t('hero.headline3')}
+              </>
+            )}
           </motion.h1>
 
           {/* Sub-headline */}
@@ -374,8 +350,7 @@ export default function DeepayLandingPage() {
             transition={{ duration: 0.6, delay: 0.35, ease: [0.4, 0, 0.2, 1] }}
             className="text-xl md:text-2xl text-white/55 max-w-2xl mx-auto mb-12 leading-relaxed font-light"
           >
-            DeePay è la piattaforma finanziaria pensata per le aziende italiane ed europee.
-            Bonifici istantanei, carte corporate e incassi — in un'unica soluzione.
+            {t('hero.sub')}
           </motion.p>
 
           {/* CTAs */}
@@ -389,14 +364,14 @@ export default function DeepayLandingPage() {
               href="/user/register"
               className="group flex items-center gap-2 px-8 py-4 bg-white text-black text-base font-semibold rounded-full hover:bg-white/90 active:scale-[0.98] transition-all duration-200 shadow-2xl shadow-white/10"
             >
-              Inizia gratuitamente
+              {t('hero.cta_primary')}
               <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
             </a>
             <a
               href="#prodotto"
               className="flex items-center gap-2 px-8 py-4 border border-white/15 text-white/80 text-base font-medium rounded-full hover:bg-white/5 hover:border-white/25 hover:text-white active:scale-[0.98] transition-all duration-200"
             >
-              Scopri il prodotto
+              {t('hero.cta_secondary')}
               <ChevronRight className="w-4 h-4 opacity-60" />
             </a>
           </motion.div>
@@ -408,10 +383,10 @@ export default function DeepayLandingPage() {
             transition={{ duration: 0.6, delay: 0.75 }}
             className="mt-14 flex flex-wrap items-center justify-center gap-6 text-sm text-white/35"
           >
-            {['Conformità PSD2', 'GDPR Ready', 'ISO 27001', 'SOC 2 Type II'].map((badge) => (
-              <span key={badge} className="flex items-center gap-1.5">
+            {(['trust.psd2', 'trust.gdpr', 'trust.iso', 'trust.soc2'] as const).map((key) => (
+              <span key={key} className="flex items-center gap-1.5">
                 <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
-                {badge}
+                {t(key)}
               </span>
             ))}
           </motion.div>
@@ -422,7 +397,7 @@ export default function DeepayLandingPage() {
       <section className="relative border-y border-white/8 bg-white/[0.02]">
         <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-white/8">
           {KPI_DATA.map((kpi, i) => (
-            <KpiCard key={kpi.label} kpi={kpi} index={i} />
+            <KpiCard key={kpi.labelKey} kpi={kpi} index={i} />
           ))}
         </div>
       </section>
@@ -441,22 +416,21 @@ export default function DeepayLandingPage() {
             className="text-center mb-16"
           >
             <span className="inline-block text-xs font-semibold tracking-[0.2em] uppercase text-emerald-400 mb-4">
-              Funzionalità
+              {t('features.label')}
             </span>
             <h2 className="font-['Outfit'] text-4xl md:text-5xl font-bold mb-4 tracking-tight">
-              Tutto ciò di cui hai bisogno,
+              {t('features.headline')}
               <br className="hidden md:block" />
-              <span className="text-white/50"> senza compromessi</span>
+              <span className="text-white/50"> {t('features.headline_muted')}</span>
             </h2>
             <p className="text-white/50 text-lg max-w-xl mx-auto leading-relaxed">
-              Una piattaforma completa progettata per le esigenze delle PMI e delle grandi aziende
-              italiane.
+              {t('features.sub')}
             </p>
           </motion.div>
 
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {FEATURES.map((feature, i) => (
-              <FeatureCard key={feature.title} feature={feature} index={i} />
+            {FEATURE_DEFS.map((feature, i) => (
+              <FeatureCard key={feature.titleKey} feature={feature} index={i} />
             ))}
           </div>
         </div>
@@ -467,15 +441,15 @@ export default function DeepayLandingPage() {
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
             <span className="inline-block text-xs font-semibold tracking-[0.2em] uppercase text-emerald-400 mb-4">
-              Come funziona
+              {t('how.label')}
             </span>
             <h2 className="font-['Outfit'] text-4xl md:text-5xl font-bold tracking-tight">
-              Operativo in pochi minuti
+              {t('how.headline')}
             </h2>
           </div>
 
           <div className="grid md:grid-cols-3 gap-8 lg:gap-16">
-            {HOW_IT_WORKS.map((item, index) => (
+            {HOW_IT_WORKS_DEFS.map((item, index) => (
               <HowItWorksStep key={item.step} item={item} index={index} />
             ))}
           </div>
@@ -497,11 +471,10 @@ export default function DeepayLandingPage() {
                 <Shield className="w-6 h-6 text-emerald-400" />
               </div>
               <h2 className="font-['Outfit'] text-3xl md:text-4xl font-bold mb-4 tracking-tight">
-                Sicurezza di livello bancario
+                {t('security.headline')}
               </h2>
               <p className="text-white/55 text-lg leading-relaxed max-w-lg">
-                Ogni transazione è protetta da crittografia end-to-end, autenticazione a due fattori
-                e monitoraggio antifrode in tempo reale. Conformità EBA e Banca d'Italia garantita.
+                {t('security.desc')}
               </p>
             </div>
             <div className="flex-shrink-0 grid grid-cols-2 gap-4">
@@ -538,26 +511,25 @@ export default function DeepayLandingPage() {
           className="relative z-10 max-w-3xl mx-auto"
         >
           <h2 className="font-['Outfit'] text-4xl md:text-6xl font-bold tracking-tight mb-6">
-            Pronto a modernizzare
-            <br />i tuoi pagamenti?
+            {t('cta.headline1')}
+            <br />{t('cta.headline2')}
           </h2>
           <p className="text-white/50 text-xl mb-12 leading-relaxed">
-            Unisciti a centinaia di aziende italiane che hanno già scelto DeePay per gestire i propri
-            flussi di cassa.
+            {t('cta.sub')}
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <a
               href="/user/register"
               className="group inline-flex items-center justify-center gap-2 px-10 py-4 bg-emerald-500 text-white text-base font-semibold rounded-full hover:bg-emerald-400 active:scale-[0.98] transition-all duration-200 shadow-2xl shadow-emerald-500/30"
             >
-              Apri conto gratuito
+              {t('cta.primary')}
               <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
             </a>
             <a
               href="/contact"
               className="inline-flex items-center justify-center px-10 py-4 border border-white/15 text-white/80 text-base font-medium rounded-full hover:bg-white/5 hover:text-white transition-all duration-200"
             >
-              Parla con un esperto
+              {t('cta.secondary')}
             </a>
           </div>
         </motion.div>
@@ -578,18 +550,18 @@ export default function DeepayLandingPage() {
                 <span className="font-['Outfit'] font-bold">DeePay</span>
               </div>
               <p className="text-sm text-white/40 leading-relaxed">
-                La piattaforma di pagamenti aziendali per l'Italia e l'Europa.
+                {t('footer.tagline')}
               </p>
             </div>
 
             {/* Links */}
             <div>
-              <h4 className="text-sm font-semibold mb-4 text-white/80">Prodotto</h4>
+              <h4 className="text-sm font-semibold mb-4 text-white/80">{t('footer.col.product')}</h4>
               <ul className="space-y-3">
-                {['Funzionalità', 'Prezzi', 'Sicurezza', 'API'].map((l) => (
-                  <li key={l}>
+                {(['footer.product.features', 'footer.product.pricing', 'footer.product.security', 'footer.product.api'] as const).map((key) => (
+                  <li key={key}>
                     <a href="#" className="text-sm text-white/40 hover:text-white/70 transition-colors">
-                      {l}
+                      {t(key)}
                     </a>
                   </li>
                 ))}
@@ -597,12 +569,12 @@ export default function DeepayLandingPage() {
             </div>
 
             <div>
-              <h4 className="text-sm font-semibold mb-4 text-white/80">Azienda</h4>
+              <h4 className="text-sm font-semibold mb-4 text-white/80">{t('footer.col.company')}</h4>
               <ul className="space-y-3">
-                {['Chi siamo', 'Blog', 'Lavora con noi', 'Contatti'].map((l) => (
-                  <li key={l}>
+                {(['footer.company.about', 'footer.company.blog', 'footer.company.careers', 'footer.company.contact'] as const).map((key) => (
+                  <li key={key}>
                     <a href="#" className="text-sm text-white/40 hover:text-white/70 transition-colors">
-                      {l}
+                      {t(key)}
                     </a>
                   </li>
                 ))}
@@ -610,12 +582,12 @@ export default function DeepayLandingPage() {
             </div>
 
             <div>
-              <h4 className="text-sm font-semibold mb-4 text-white/80">Supporto</h4>
+              <h4 className="text-sm font-semibold mb-4 text-white/80">{t('footer.col.support')}</h4>
               <ul className="space-y-3">
-                {['Help Center', 'Status', 'Developers', 'Termini & Privacy'].map((l) => (
-                  <li key={l}>
+                {(['footer.support.help', 'footer.support.status', 'footer.support.developers', 'footer.support.terms'] as const).map((key) => (
+                  <li key={key}>
                     <a href="#" className="text-sm text-white/40 hover:text-white/70 transition-colors">
-                      {l}
+                      {t(key)}
                     </a>
                   </li>
                 ))}
@@ -624,10 +596,10 @@ export default function DeepayLandingPage() {
           </div>
 
           <div className="border-t border-white/8 pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-white/30">
-            <p>© {new Date().getFullYear()} DeePay S.r.l. — Tutti i diritti riservati</p>
+            <p>{t('footer.copyright', { year: new Date().getFullYear() })}</p>
             <p className="flex items-center gap-2">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-              Servizi operativi
+              {t('footer.status')}
             </p>
           </div>
         </div>
