@@ -13,7 +13,7 @@ const en: Record<string, string> = {
   'nav.openMenu':  'Open menu',
 
   /* ── Hero ── */
-  'hero.badge':       'PSD2 Compliant · Regulated by Banca d\'Italia',
+  'hero.badge':       "PSD2 Compliant · Regulated by Banca d'Italia",
   'hero.headline1':   'The future of',
   'hero.headline2':   'business payments',
   'hero.headline3':   '',
@@ -65,7 +65,7 @@ const en: Record<string, string> = {
   /* ── Security ── */
   'security.label': 'Security',
   'security.headline': 'Bank-grade security',
-  'security.desc': 'Every transaction is protected by end-to-end encryption, two-factor authentication and real-time anti-fraud monitoring. EBA and Banca d\'Italia compliance guaranteed.',
+  'security.desc': "Every transaction is protected by end-to-end encryption, two-factor authentication and real-time anti-fraud monitoring. EBA and Banca d'Italia compliance guaranteed.",
 
   /* ── CTA Section ── */
   'cta.headline1': 'Ready to modernise',

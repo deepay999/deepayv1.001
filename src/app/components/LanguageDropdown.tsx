@@ -1,30 +1,36 @@
 import { useRef, useState } from 'react';
+import type { JSX } from 'react';
 import { ChevronDown } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { changeLanguage, type Lang, SUPPORTED } from '../../i18n';
 
-/** Flag SVG for a given language code. */
-function FlagIcon({ lang }: { lang: Lang }) {
-  if (lang === 'zh') {
-    return (
-      <svg width="20" height="14" viewBox="0 0 20 14" fill="none" aria-hidden="true">
-        <rect width="20" height="14" rx="1" fill="#DE2910" />
-        <polygon points="4,2 4.9,4.8 7.8,4.8 5.5,6.5 6.4,9.3 4,7.6 1.6,9.3 2.5,6.5 0.2,4.8 3.1,4.8" fill="#FFDE00" />
-        <polygon points="8,1 8.5,2.5 10,2.5 8.8,3.3 9.3,4.8 8,4 6.7,4.8 7.2,3.3 6,2.5 7.5,2.5" fill="#FFDE00" />
-        <polygon points="10,3 10.5,4.5 12,4.5 10.8,5.3 11.3,6.8 10,6 8.7,6.8 9.2,5.3 8,4.5 9.5,4.5" fill="#FFDE00" />
-        <polygon points="8,6 8.5,7.5 10,7.5 8.8,8.3 9.3,9.8 8,9 6.7,9.8 7.2,8.3 6,7.5 7.5,7.5" fill="#FFDE00" />
-      </svg>
-    );
-  }
-  return (
+/** Compact flag SVGs indexed by language code. */
+const FLAGS: Record<Lang, JSX.Element> = {
+  zh: (
+    /* China — red field with large yellow star + four small stars */
+    <svg width="20" height="14" viewBox="0 0 20 14" fill="none" aria-hidden="true">
+      <rect width="20" height="14" rx="1" fill="#DE2910" />
+      <polygon points="4,2 5,4.8 8,4.8 5.6,6.5 6.5,9.3 4,7.5 1.5,9.3 2.4,6.5 0,4.8 3,4.8" fill="#FFDE00" />
+      <polygon points="8,1.5 8.6,3 10.1,3 8.9,3.8 9.4,5.3 8,4.5 6.6,5.3 7.1,3.8 5.9,3 7.4,3" fill="#FFDE00" />
+      <polygon points="10,3.5 10.6,5 12.1,5 10.9,5.8 11.4,7.3 10,6.5 8.6,7.3 9.1,5.8 7.9,5 9.4,5" fill="#FFDE00" />
+      <polygon points="8,6.5 8.6,8 10.1,8 8.9,8.8 9.4,10.3 8,9.5 6.6,10.3 7.1,8.8 5.9,8 7.4,8" fill="#FFDE00" />
+    </svg>
+  ),
+  en: (
+    /* Union Jack (simplified) */
     <svg width="20" height="14" viewBox="0 0 20 14" fill="none" aria-hidden="true">
       <rect width="20" height="14" rx="1" fill="#012169" />
-      <path d="M0,0 L20,14 M20,0 L0,14" stroke="white" strokeWidth="3" />
-      <path d="M0,0 L20,14 M20,0 L0,14" stroke="#C8102E" strokeWidth="1.5" />
-      <path d="M10,0 L10,14 M0,7 L20,7" stroke="white" strokeWidth="4.5" />
-      <path d="M10,0 L10,14 M0,7 L20,7" stroke="#C8102E" strokeWidth="3" />
+      <path d="M0 0L20 14M20 0L0 14" stroke="white" strokeWidth="3" />
+      <path d="M0 0L20 14M20 0L0 14" stroke="#C8102E" strokeWidth="1.6" />
+      <path d="M10 0V14M0 7H20" stroke="white" strokeWidth="5" />
+      <path d="M10 0V14M0 7H20" stroke="#C8102E" strokeWidth="3" />
     </svg>
-  );
+  ),
+};
+
+/** Flag icon for a given language code. */
+function FlagIcon({ lang }: { lang: Lang }) {
+  return FLAGS[lang];
 }
 
 interface LanguageDropdownProps {
