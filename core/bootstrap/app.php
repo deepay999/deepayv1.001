@@ -120,7 +120,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'permission' => \Spatie\Permission\Middleware\PermissionMiddleware::class,
         ]);
         $middleware->validateCsrfTokens(
-            except: ['user/deposit', 'ipn*','pusher*']
+            except: ['user/deposit', 'ipn*', 'pusher*', 'webhooks/*']
         );
     })
     ->withExceptions(function (Exceptions $exceptions) {

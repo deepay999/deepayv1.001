@@ -11,6 +11,7 @@ use App\Models\Deposit;
 use App\Models\GatewayCurrency;
 use App\Models\Transaction;
 use App\Models\User;
+use App\Services\Finance\DepositSettlementService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -160,95 +161,7 @@ class PaymentController extends Controller
 
     public static function userDataUpdate($deposit, $isManual = null)
     {
-
-        if ($deposit->user_id != 0) {
-
-
-            if ($deposit->status == Status::PAYMENT_INITIATE || $deposit->status == Status::PAYMENT_PENDING) {
-                $deposit->status = Status::PAYMENT_SUCCESS;
-                $deposit->save();
-
-                $user = User::find($deposit->user_id);
-
-                $user->balance += $deposit->amount;
-                $user->save();
-
-                $methodName = $deposit->methodName();
-
-                $transaction               = new Transaction();
-                $transaction->user_id      = $user->id;
-                $transaction->amount       = $deposit->amount;
-                $transaction->post_balance = $user->balance;
-                $transaction->charge       = $deposit->charge;
-                $transaction->trx_type     = '+';
-                $transaction->details      = 'Add money via ' . $methodName;
-                $transaction->trx          = $deposit->trx;
-                $transaction->remark       = 'add_money';
-                $transaction->save();
-
-                if (!$isManual) {
-                    $adminNotification = new AdminNotification();
-                    $adminNotification->user_id = $user->id;
-                    $adminNotification->title = 'Add Money successful via ' . $methodName;
-                    $adminNotification->click_url = urlPath('admin.deposit.successful');
-                    $adminNotification->save();
-                }
-
-                notify($user, $isManual ? 'DEPOSIT_APPROVE' : 'DEPOSIT_COMPLETE', [
-                    'method_name' => $methodName,
-                    'method_currency' => $deposit->method_currency,
-                    'method_amount' => showAmount($deposit->final_amount, currencyFormat: false),
-                    'amount' => showAmount($deposit->amount, currencyFormat: false),
-                    'charge' => showAmount($deposit->charge, currencyFormat: false),
-                    'rate' => showAmount($deposit->rate, currencyFormat: false),
-                    'trx' => $deposit->trx,
-                    'post_balance' => showAmount($user->balance)
-                ]);
-            }
-        } elseif ($deposit->agent_id != 0) {
-
-            if ($deposit->status == Status::PAYMENT_INITIATE || $deposit->status == Status::PAYMENT_PENDING) {
-                $deposit->status = Status::PAYMENT_SUCCESS;
-                $deposit->save();
-
-                $agent = Agent::find($deposit->agent_id);
-
-                $agent->balance += $deposit->amount;
-                $agent->save();
-
-                $methodName = $deposit->methodName();
-
-                $transaction               = new Transaction();
-                $transaction->agent_id     = $agent->id;
-                $transaction->amount       = $deposit->amount;
-                $transaction->post_balance = $agent->balance;
-                $transaction->charge       = $deposit->charge;
-                $transaction->trx_type     = '+';
-                $transaction->details      = 'Add money via ' . $methodName;
-                $transaction->trx          = $deposit->trx;
-                $transaction->remark       = 'add_money';
-                $transaction->save();
-
-                if (!$isManual) {
-                    $adminNotification = new AdminNotification();
-                    $adminNotification->agent_id  = $agent->id;
-                    $adminNotification->title = 'Add Money successful via ' . $methodName;
-                    $adminNotification->click_url = urlPath('admin.deposit.successful');
-                    $adminNotification->save();
-                }
-
-                notify($agent, $isManual ? 'DEPOSIT_APPROVE' : 'DEPOSIT_COMPLETE', [
-                    'method_name' => $methodName,
-                    'method_currency' => $deposit->method_currency,
-                    'method_amount' => showAmount($deposit->final_amount, currencyFormat: false),
-                    'amount' => showAmount($deposit->amount, currencyFormat: false),
-                    'charge' => showAmount($deposit->charge, currencyFormat: false),
-                    'rate' => showAmount($deposit->rate, currencyFormat: false),
-                    'trx' => $deposit->trx,
-                    'post_balance' => showAmount($agent->balance)
-                ]);
-            }
-        }
+        app(DepositSettlementService::class)->settle($deposit, (bool) $isManual);
     }
 
     public function manualDepositConfirm()

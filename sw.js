@@ -1,6 +1,5 @@
-const CACHE_NAME = 'deePay-pwa-v1';
+const CACHE_NAME = 'deePay-pwa-v2';
 const ASSETS_TO_CACHE = [
-  '/',
   '/assets/images/logo_icon/favicon.png',
   '/assets/images/logo_icon/logo.png',
   '/assets/images/logo_icon/logo_dark.png',
@@ -32,20 +31,42 @@ self.addEventListener('activate', event => {
 self.addEventListener('fetch', event => {
   if (event.request.method !== 'GET') return;
 
+  const request = event.request;
+  const isNavigationRequest = request.mode === 'navigate';
+
+  if (isNavigationRequest) {
+    event.respondWith(
+      fetch(request)
+        .then(networkResponse => {
+          if (networkResponse && networkResponse.status === 200) {
+            const responseClone = networkResponse.clone();
+            caches.open(CACHE_NAME).then(cache => {
+              cache.put(request, responseClone);
+            });
+          }
+
+          return networkResponse;
+        })
+        .catch(() => caches.match(request).then(cachedResponse => cachedResponse || caches.match('/assets/images/logo_icon/logo.png')))
+    );
+
+    return;
+  }
+
   event.respondWith(
-    caches.match(event.request).then(cachedResponse => {
+    caches.match(request).then(cachedResponse => {
       if (cachedResponse) {
         return cachedResponse;
       }
 
-      return fetch(event.request).then(networkResponse => {
+      return fetch(request).then(networkResponse => {
         if (!networkResponse || networkResponse.status !== 200 || networkResponse.type !== 'basic') {
           return networkResponse;
         }
 
         const responseClone = networkResponse.clone();
         caches.open(CACHE_NAME).then(cache => {
-          cache.put(event.request, responseClone);
+          cache.put(request, responseClone);
         });
 
         return networkResponse;

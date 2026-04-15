@@ -50,6 +50,9 @@ class AutomaticGatewayController extends Controller
                 'payment_method_ids' => ['title' => 'Payment Method IDs', 'global' => true, 'value' => ''],
                 'oauth_url' => ['title' => 'OAuth Token URL', 'global' => true, 'value' => 'https://oauth.swan.io/oauth2'],
                 'graphql_url' => ['title' => 'GraphQL API URL', 'global' => true, 'value' => 'https://api.swan.io/sandbox-partner/graphql'],
+                'webhook_secret' => ['title' => 'Webhook Secret', 'global' => true, 'value' => ''],
+                'webhook_signature_header' => ['title' => 'Webhook Signature Header', 'global' => true, 'value' => 'X-Swan-Signature'],
+                'webhook_success_statuses' => ['title' => 'Webhook Success Statuses', 'global' => true, 'value' => 'MerchantPaymentCaptured,MerchantPaymentAuthorized'],
             ]);
             $gateway->supported_currencies = json_encode(['USD' => 'USD', 'EUR' => 'EUR']);
             $gateway->crypto = 0;
@@ -59,6 +62,49 @@ class AutomaticGatewayController extends Controller
         }
 
         $notify[] = ['success', 'Swan gateway record created. Configure credentials and supported currencies before enabling the gateway.'];
+        return to_route('admin.gateway.automatic.edit', $gateway->alias)->withNotify($notify);
+    }
+
+    public function airwallex()
+    {
+        $gateway = Gateway::automatic()->where('alias', 'Airwallex')->first();
+
+        if (!$gateway) {
+            return view('admin.gateways.automatic.swan');
+        }
+
+        return redirect()->route('admin.gateway.automatic.edit', $gateway->alias);
+    }
+
+    public function airwallexCreate()
+    {
+        $gateway = Gateway::where('alias', 'Airwallex')->first();
+
+        if (!$gateway) {
+            $gateway = new Gateway();
+            $gateway->form_id = 0;
+            $gateway->code = 130;
+            $gateway->name = 'Airwallex';
+            $gateway->alias = 'Airwallex';
+            $gateway->image = '';
+            $gateway->status = 0;
+            $gateway->gateway_parameters = json_encode([
+                'client_id' => ['title' => 'Client ID', 'global' => true, 'value' => ''],
+                'api_key' => ['title' => 'API Key', 'global' => true, 'value' => ''],
+                'api_url' => ['title' => 'API Base URL', 'global' => true, 'value' => 'https://api-demo.airwallex.com/api/v1'],
+                'webhook_secret' => ['title' => 'Webhook Secret', 'global' => true, 'value' => ''],
+                'account_id' => ['title' => 'Account ID', 'global' => true, 'value' => ''],
+                'webhook_signature_header' => ['title' => 'Webhook Signature Header', 'global' => true, 'value' => 'x-signature'],
+                'webhook_success_statuses' => ['title' => 'Webhook Success Statuses', 'global' => true, 'value' => 'SUCCEEDED,SUCCESS,SETTLED'],
+            ]);
+            $gateway->supported_currencies = json_encode(['USD' => 'USD', 'EUR' => 'EUR', 'GBP' => 'GBP', 'HKD' => 'HKD']);
+            $gateway->crypto = 0;
+            $gateway->extra = null;
+            $gateway->description = null;
+            $gateway->save();
+        }
+
+        $notify[] = ['success', 'Airwallex gateway record created. Configure credentials, webhook secret and supported currencies before enabling the gateway.'];
         return to_route('admin.gateway.automatic.edit', $gateway->alias)->withNotify($notify);
     }
 

@@ -91,6 +91,10 @@ class User extends Authenticatable {
         return $this->hasMany(Deposit::class)->where('status', '!=', Status::PAYMENT_INITIATE);
     }
 
+    public function virtualCards() {
+        return $this->hasMany(VirtualCard::class)->orderBy('id', 'desc');
+    }
+
     public function withdrawals() {
         return $this->hasMany(Withdrawal::class)->where('status', '!=', Status::PAYMENT_INITIATE);
     }
