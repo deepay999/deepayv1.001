@@ -1,29 +1,31 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Home, Wallet, CreditCard, Archive } from 'lucide-react';
+import { Landmark, CreditCard, ArrowUpRight, ArrowDownLeft, Vault } from 'lucide-react';
 import { HomePage } from './components/HomePage';
 import { CardsPage } from './components/CardsPage';
 import { VaultsPage } from './components/VaultsPage';
 import { ProfilePage } from './components/ProfilePage';
 import { SupportPage } from './components/SupportPage';
+import { RemittancePage } from './components/RemittancePage';
+import { ReceivePage } from './components/ReceivePage';
 import { TransferModal } from './components/TransferModal';
 import { AddMoneyModal } from './components/AddMoneyModal';
 import { SplashScreen } from './components/SplashScreen';
 import { PageSwipeTransition } from './components/PageTransition';
 import { ThemeProvider } from './contexts/ThemeContext';
-import { CryptoPage } from './components/CryptoPage';
 
 /* ─── nav tab definition ──────────────────────────────────── */
 const TABS = [
-  { id: 'home',   icon: Home,       label: 'Home'   },
-  { id: 'crypto', icon: Wallet,     label: 'Crypto' },
-  { id: 'cards',  icon: CreditCard, label: 'Cards'  },
-  { id: 'vaults', icon: Archive,    label: 'Vaults' },
+  { id: 'bank',    icon: Landmark,       label: '银行'   },
+  { id: 'cards',   icon: CreditCard,     label: '卡'     },
+  { id: 'send',    icon: ArrowUpRight,   label: '汇款'   },
+  { id: 'receive', icon: ArrowDownLeft,  label: '收款'   },
+  { id: 'vaults',  icon: Vault,          label: '宝库'   },
 ];
 
 /* ─── App ─────────────────────────────────────────────────── */
 export default function App() {
-  const [activeTab, setActiveTab]             = useState('home');
+  const [activeTab, setActiveTab]             = useState('bank');
   const [showTransferModal, setTransferModal]  = useState(false);
   const [showAddMoneyModal, setAddMoneyModal]  = useState(false);
   const [showSplash, setShowSplash]            = useState(true);
@@ -34,11 +36,12 @@ export default function App() {
     if (showProfile) return <ProfilePage onBack={() => setShowProfile(false)} onViewWebsite={() => {}} />;
     if (showSupport) return <SupportPage onClose={() => setShowSupport(false)} />;
     switch (activeTab) {
-      case 'home':   return <HomePage onAddMoney={() => setAddMoneyModal(true)} onTransfer={() => setTransferModal(true)} onOpenProfile={() => setShowProfile(true)} />;
-      case 'crypto': return <CryptoPage />;
-      case 'cards':  return <CardsPage />;
-      case 'vaults': return <VaultsPage />;
-      default:       return null;
+      case 'bank':    return <HomePage onAddMoney={() => setAddMoneyModal(true)} onTransfer={() => setTransferModal(true)} onOpenProfile={() => setShowProfile(true)} onSupport={() => setShowSupport(true)} />;
+      case 'cards':   return <CardsPage />;
+      case 'send':    return <RemittancePage />;
+      case 'receive': return <ReceivePage />;
+      case 'vaults':  return <VaultsPage />;
+      default:        return null;
     }
   };
 
@@ -56,8 +59,8 @@ export default function App() {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 2.8, duration: 0.4 }}
-        className="fixed inset-0 flex flex-col bg-white overflow-hidden"
-        style={{ WebkitOverflowScrolling: 'touch' }}
+        className="fixed inset-0 flex flex-col overflow-hidden"
+        style={{ background: '#F2F2F7', WebkitOverflowScrolling: 'touch' }}
       >
         {/* Page content */}
         <div className="flex-1 overflow-hidden relative">
@@ -68,44 +71,46 @@ export default function App() {
           </AnimatePresence>
         </div>
 
-        {/* ── Bottom Navigation ── */}
+        {/* ── Floating Bottom Navigation ── */}
         <AnimatePresence>
           {showNav && (
-            <motion.nav
-              initial={{ opacity: 0, y: 20 }}
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 20 }}
-              transition={{ delay: 3.1, duration: 0.3 }}
-              className="flex-shrink-0 bg-white"
-              style={{
-                paddingBottom: 'env(safe-area-inset-bottom, 0px)',
-                borderTop: '1px solid rgba(0,0,0,0.06)',
-              }}
+              exit={{ opacity: 0, y: 30 }}
+              transition={{ delay: 3.1, duration: 0.4, type: 'spring', stiffness: 200 }}
+              className="flex-shrink-0 px-3 pb-3"
+              style={{ paddingBottom: 'max(12px, env(safe-area-inset-bottom, 12px))' }}
             >
-              <div className="flex items-center justify-around px-3 h-16">
+              <nav
+                className="flex items-center justify-around rounded-[28px] bg-white px-2 h-[64px]"
+                style={{
+                  boxShadow: '0 4px 24px rgba(0,0,0,0.10), 0 1px 4px rgba(0,0,0,0.06)',
+                }}
+              >
                 {TABS.map((tab) => {
                   const isActive = activeTab === tab.id;
                   return (
                     <motion.button
                       key={tab.id}
                       onClick={() => setActiveTab(tab.id)}
-                      whileTap={{ scale: 0.88 }}
-                      className="flex flex-col items-center gap-1 px-4 py-1 relative"
+                      whileTap={{ scale: 0.84 }}
+                      className="flex flex-col items-center gap-0.5 px-3 py-1 relative min-w-[52px]"
                     >
                       {isActive && (
                         <motion.div
-                          layoutId="navPill"
-                          className="absolute inset-x-0 top-0 h-8 rounded-2xl bg-neutral-100"
-                          transition={{ type: 'spring', stiffness: 500, damping: 35 }}
+                          layoutId="navActivePill"
+                          className="absolute inset-x-0 inset-y-0 rounded-[20px] bg-neutral-100"
+                          transition={{ type: 'spring', stiffness: 500, damping: 38 }}
                         />
                       )}
                       <tab.icon
-                        className={`w-5 h-5 relative z-10 transition-colors duration-200 ${
+                        className={`w-[18px] h-[18px] relative z-10 transition-colors duration-150 ${
                           isActive ? 'text-neutral-900' : 'text-neutral-400'
                         }`}
-                        strokeWidth={isActive ? 2.2 : 1.8}
+                        strokeWidth={isActive ? 2.4 : 1.7}
                       />
-                      <span className={`text-[10px] font-medium relative z-10 transition-colors duration-200 ${
+                      <span className={`text-[9px] font-semibold relative z-10 transition-colors duration-150 tracking-wide ${
                         isActive ? 'text-neutral-900' : 'text-neutral-400'
                       }`}>
                         {tab.label}
@@ -113,8 +118,8 @@ export default function App() {
                     </motion.button>
                   );
                 })}
-              </div>
-            </motion.nav>
+              </nav>
+            </motion.div>
           )}
         </AnimatePresence>
       </motion.div>
