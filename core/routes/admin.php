@@ -51,6 +51,8 @@ Route::middleware('admin')->group(function () {
         });
 
         Route::post('add-sub-balance/{id}', 'addSubBalance')->name('add.sub.balance')->middleware(['permission:update user balance,admin']);
+        Route::post('freeze-balance/{id}', 'freezeBalance')->name('freeze.balance')->middleware(['permission:update user balance,admin']);
+        Route::post('unfreeze-balance/{id}', 'unfreezeBalance')->name('unfreeze.balance')->middleware(['permission:update user balance,admin']);
 
         Route::middleware(['permission:send user notification,admin'])->group(function () {
             Route::get('send-notification/{id}', 'showNotificationSingleForm')->name('notification.single');
@@ -375,6 +377,19 @@ Route::middleware('admin')->group(function () {
         Route::get('module-setting', 'index')->name('module.setting');
         Route::get('module-setting/update/{id}', 'update')->name('module.update');
     });
+
+    // Loyalty Points
+    Route::controller('LoyaltyController')->prefix('loyalty')->name('loyalty.')->group(function () {
+        Route::get('settings', 'settings')->name('settings');
+        Route::post('settings', 'settingsUpdate')->name('settings.update');
+        Route::get('history', 'history')->name('history');
+        Route::get('user/{userId}', 'userPoints')->name('user.points');
+        Route::post('add-sub-points/{userId}', 'addSubPoints')->name('add.sub.points');
+        Route::post('redeem/{userId}', 'redeemPoints')->name('redeem');
+    });
+
+    // Wallet Overview
+    Route::get('wallet/overview', 'WalletController@overview')->name('wallet.overview');
 
     //API setting
     Route::controller('ApiProviderSettingController')->middleware('permission:module settings,admin')->group(function () {

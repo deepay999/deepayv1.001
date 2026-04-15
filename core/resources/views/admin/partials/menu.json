@@ -2443,6 +2443,36 @@
                     ]
                 },
                 {
+                    "title": "Wallet Overview",
+                    "route_name": "admin.wallet.overview",
+                    "menu_active": "admin.wallet.*",
+                    "keyword": [
+                        "wallet",
+                        "wallet overview",
+                        "balance summary",
+                        "frozen balance",
+                        "wallet settings"
+                    ],
+                    "permission": [
+                        "update general settings"
+                    ]
+                },
+                {
+                    "title": "Loyalty Points",
+                    "route_name": "admin.loyalty.settings",
+                    "menu_active": "admin.loyalty.*",
+                    "keyword": [
+                        "loyalty points",
+                        "points setting",
+                        "rewards",
+                        "earn points",
+                        "redeem points"
+                    ],
+                    "permission": [
+                        "update general settings"
+                    ]
+                },
+                {
                     "title": "Operating Country",
                     "route_name": "admin.operating.country.index",
                     "menu_active": "admin.operating.country.*",
