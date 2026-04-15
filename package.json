@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "check-build": "node -e \"const fs=require('fs');const files=['dist/assets/app.js','dist/assets/index.css','dist/assets/manifest.json'];let ok=true;files.forEach(f=>{if(!fs.existsSync(f)){console.error('MISSING: '+f);ok=false;}else{console.log('OK: '+f);}});if(!ok)process.exit(1);\""
   },
   "dependencies": {
     "lucide-react": "^0.468.0",

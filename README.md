@@ -31,6 +31,59 @@ Vedi [`NGINX.md`](./NGINX.md) per la configurazione completa di Nginx, inclusa l
 
 **Problema comune**: Se il sito mostra solo il messaggio di startup e React non si monta, quasi sempre il motivo è che Nginx sta servendo i file `.js`/`.css` come `text/html` (li passa a Laravel invece di servirli staticamente). Vedi NGINX.md §Troubleshooting.
 
+## Deploy automatico (CI/CD)
+
+Ogni push al branch `main` viene automaticamente distribuito al server di produzione tramite il workflow GitHub Actions in `.github/workflows/deploy.yml`.
+
+Il workflow:
+1. Builda il frontend React con Vite
+2. Verifica gli artefatti di build (`npm run check-build`)
+3. Carica `dist/`, `manifest.json` e `sw.js` sul server via `rsync`
+4. Si collega via SSH, esegue `git pull`, `composer install`, `artisan migrate` e i comandi di cache
+5. Esegue smoke test automatici (homepage 200, `app.js` con MIME corretto, `manifest.json` 200)
+
+**Configurare i segreti GitHub** (repo → Settings → Secrets → Actions):
+
+| Segreto | Esempio | Descrizione |
+|---|---|---|
+| `DEPLOY_SSH_KEY` | `-----BEGIN OPENSSH PRIVATE KEY-----…` | Chiave privata Ed25519 |
+| `DEPLOY_HOST` | `deepay.srl` | Hostname o IP del server |
+| `DEPLOY_USER` | `deploy` | Utente SSH |
+| `DEPLOY_PATH` | `/var/www/deepayv1.001` | Percorso assoluto sul server |
+
+Per generare una deploy key dedicata:
+
+```bash
+ssh-keygen -t ed25519 -C "github-actions-deploy" -f ~/.ssh/deepay_deploy
+# Aggiungi la chiave pubblica al server:
+ssh-copy-id -i ~/.ssh/deepay_deploy.pub deploy@deepay.srl
+# Copia la chiave privata nel segreto GitHub DEPLOY_SSH_KEY:
+cat ~/.ssh/deepay_deploy
+```
+
+## Primo deploy manuale sul server
+
+```bash
+cd /var/www
+git clone https://github.com/deepay999/deepayv1.001.git deepayv1.001
+cd deepayv1.001
+
+# PHP
+cd core && composer install --no-dev --optimize-autoloader && cd ..
+cp core/.env.example core/.env
+# Modifica core/.env (APP_URL, DB_*, ecc.)
+php index.php artisan key:generate
+php index.php artisan migrate --force
+
+# Node / Frontend
+npm install
+npm run build
+npm run check-build  # verifica che dist/assets/app.js, index.css, manifest.json esistano
+
+# Nginx
+sudo nginx -t && sudo systemctl reload nginx
+```
+
 ## Struttura frontend (`src/`)
 
 ```
@@ -72,3 +125,4 @@ Utente apre deepay.srl/
   └── Desktop → Landing page (stile fintech)
         Hero · KPI band · Feature cards · CTA · Footer
 ```
+

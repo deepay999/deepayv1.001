@@ -1,0 +1,118 @@
+name: Deploy to Production
+
+# Triggers: every push to main, or manually from the Actions tab.
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  build-and-deploy:
+    name: Build React bundle & deploy via SSH
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      # ── 1. Checkout ────────────────────────────────────────────────────────
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # ── 2. Build React / Vite frontend ─────────────────────────────────────
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install Node dependencies
+        run: npm ci
+
+      - name: Build frontend (Vite)
+        run: npm run build
+
+      - name: Verify build artifacts
+        run: npm run check-build
+
+      # ── 3. Copy dist/ to server via rsync over SSH ──────────────────────────
+      # Required secrets (set in repo Settings → Secrets → Actions):
+      #   DEPLOY_SSH_KEY   — Ed25519 private key (matching the server's authorized_keys)
+      #   DEPLOY_HOST      — server hostname or IP (e.g. deepay.srl)
+      #   DEPLOY_USER      — SSH login user (e.g. deploy or root)
+      #   DEPLOY_PATH      — absolute path on server (e.g. /var/www/deepayv1.001)
+      - name: Install SSH key
+        uses: shimataro/ssh-key-action@v2
+        with:
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          known_hosts: unnecessary
+          if_key_exists: replace
+
+      - name: Add server to known_hosts
+        run: ssh-keyscan -H "${{ secrets.DEPLOY_HOST }}" >> ~/.ssh/known_hosts
+
+      - name: Sync dist/ to server
+        run: |
+          rsync -az --delete \
+            dist/ \
+            "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:${{ secrets.DEPLOY_PATH }}/dist/"
+
+      - name: Sync manifest.json and sw.js to server root
+        run: |
+          rsync -az \
+            manifest.json sw.js \
+            "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:${{ secrets.DEPLOY_PATH }}/"
+
+      # ── 4. Pull latest code & run Laravel maintenance tasks ─────────────────
+      - name: Deploy on server
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          script: |
+            set -e
+            cd "${{ secrets.DEPLOY_PATH }}"
+
+            # Pull latest code (everything except dist/ which was already rsynced)
+            git fetch --quiet origin main
+            git reset --hard origin/main
+
+            # Re-apply the freshly-built dist/ (git reset would have overwritten it)
+            # rsync in the previous step already placed the new dist/ so nothing to do.
+
+            # Laravel: install PHP dependencies (production, no dev)
+            cd core
+            composer install --no-dev --optimize-autoloader --quiet
+
+            # Run DB migrations (safe: only runs pending migrations)
+            php ../index.php artisan migrate --force
+
+            # Clear and rebuild all caches
+            php ../index.php artisan config:cache
+            php ../index.php artisan route:cache
+            php ../index.php artisan view:cache
+            php ../index.php artisan event:cache
+
+            # Reload PHP-FPM so new config/view caches take effect
+            sudo systemctl reload php8.2-fpm || sudo systemctl reload php8.1-fpm || true
+
+      # ── 5. Smoke-test ───────────────────────────────────────────────────────
+      - name: Smoke-test — check homepage returns 200
+        run: |
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://${{ secrets.DEPLOY_HOST }}/)
+          echo "Homepage status: $STATUS"
+          [ "$STATUS" = "200" ] || { echo "Homepage did not return 200!"; exit 1; }
+
+      - name: Smoke-test — check dist/assets/app.js is JS (not HTML)
+        run: |
+          CT=$(curl -s -I https://${{ secrets.DEPLOY_HOST }}/dist/assets/app.js \
+               | grep -i "^content-type:" | head -1)
+          echo "Content-Type: $CT"
+          echo "$CT" | grep -qi "javascript" || \
+            { echo "ERROR: app.js is not being served as JavaScript — check Nginx config"; exit 1; }
+
+      - name: Smoke-test — check /manifest.json returns 200
+        run: |
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://${{ secrets.DEPLOY_HOST }}/manifest.json)
+          echo "manifest.json status: $STATUS"
+          [ "$STATUS" = "200" ] || { echo "/manifest.json returned $STATUS"; exit 1; }
