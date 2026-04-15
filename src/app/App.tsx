@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Home, Wallet, ArrowLeftRight, Building2, Activity } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { HomePage } from './components/HomePage';
 import { WalletPage } from './components/WalletPage';
 import { TransferPage } from './components/TransferPage';
@@ -13,16 +14,18 @@ import { PageSwipeTransition } from './components/PageTransition';
 import { ThemeProvider } from './contexts/ThemeContext';
 
 /* ─── nav tab definition ──────────────────────────────────── */
-const TABS = [
-  { id: 'home',     icon: Home,            label: 'Home'     },
-  { id: 'wallet',   icon: Wallet,          label: 'Wallet'   },
-  { id: 'transfer', icon: ArrowLeftRight,  label: 'Transfer' },
-  { id: 'iban',     icon: Building2,       label: 'IBAN'     },
-  { id: 'activity', icon: Activity,        label: 'Activity' },
+const TAB_DEFS = [
+  { id: 'home',     icon: Home,            labelKey: 'Home'     },
+  { id: 'wallet',   icon: Wallet,          labelKey: 'Wallet'   },
+  { id: 'transfer', icon: ArrowLeftRight,  labelKey: 'Transfer' },
+  { id: 'iban',     icon: Building2,       labelKey: 'IBAN'     },
+  { id: 'activity', icon: Activity,        labelKey: 'Activity' },
 ];
 
 /* ─── App ─────────────────────────────────────────────────── */
 export default function App() {
+  const { t } = useTranslation();
+  const TABS = TAB_DEFS.map((tab) => ({ ...tab, label: t(tab.labelKey) }));
   const [activeTab, setActiveTab]            = useState('home');
   const [showAddMoneyModal, setAddMoneyModal] = useState(false);
   const [showSplash, setShowSplash]           = useState(true);
