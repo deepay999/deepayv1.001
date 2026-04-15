@@ -24,7 +24,13 @@ Route::namespace('Auth')->group(function () {
     });
 });
 
-Route::middleware('admin')->group(function () {
+// Admin 2FA verify (requires admin login but NOT the 2FA check itself)
+Route::middleware('admin')->controller('AdminTwoFactorController')->group(function () {
+    Route::get('twofactor/verify', 'verifyForm')->name('2fa.verify');
+    Route::post('twofactor/verify', 'verify')->name('2fa.verify.post');
+});
+
+Route::middleware(['admin', 'admin.2fa'])->group(function () {
     // Users Management
     Route::controller('ManageUsersController')->name('users.')->prefix('users')->group(function () {
         Route::middleware('permission:view users,admin')->group(function () {
@@ -51,6 +57,8 @@ Route::middleware('admin')->group(function () {
         });
 
         Route::post('add-sub-balance/{id}', 'addSubBalance')->name('add.sub.balance')->middleware(['permission:update user balance,admin']);
+        Route::post('freeze-balance/{id}', 'freezeBalance')->name('freeze.balance')->middleware(['permission:update user balance,admin']);
+        Route::post('unfreeze-balance/{id}', 'unfreezeBalance')->name('unfreeze.balance')->middleware(['permission:update user balance,admin']);
 
         Route::middleware(['permission:send user notification,admin'])->group(function () {
             Route::get('send-notification/{id}', 'showNotificationSingleForm')->name('notification.single');
@@ -376,6 +384,19 @@ Route::middleware('admin')->group(function () {
         Route::get('module-setting/update/{id}', 'update')->name('module.update');
     });
 
+    // Loyalty Points
+    Route::controller('LoyaltyController')->prefix('loyalty')->name('loyalty.')->group(function () {
+        Route::get('settings', 'settings')->name('settings');
+        Route::post('settings', 'settingsUpdate')->name('settings.update');
+        Route::get('history', 'history')->name('history');
+        Route::get('user/{userId}', 'userPoints')->name('user.points');
+        Route::post('add-sub-points/{userId}', 'addSubPoints')->name('add.sub.points');
+        Route::post('redeem/{userId}', 'redeemPoints')->name('redeem');
+    });
+
+    // Wallet Overview
+    Route::get('wallet/overview', 'WalletController@overview')->name('wallet.overview');
+
     //API setting
     Route::controller('ApiProviderSettingController')->middleware('permission:module settings,admin')->group(function () {
         Route::get('api-setting/', 'providerConfiguration')->name('api.setting')->middleware('permission:module settings,admin');
@@ -397,6 +418,11 @@ Route::middleware('admin')->group(function () {
         Route::get('agent/notification/history', 'agentNotificationHistory')->name('agent.notification.history')->middleware('permission:view agent notifications,admin');
         Route::get('merchant/notification/history', 'merchantNotificationHistory')->name('merchant.notification.history')->middleware('permission:view merchant notifications,admin');
     });
+
+    // Security Log Analysis
+    Route::get('report/security/logs', 'SecurityLogController@index')
+        ->name('report.security.logs')
+        ->middleware('permission:view login history,admin');
 
     // Support
     Route::controller('SupportTicketController')->prefix('ticket')->name('ticket.')->group(function () {
@@ -439,6 +465,13 @@ Route::middleware('admin')->group(function () {
         Route::post('profile', 'profileUpdate')->name('profile.update');
         Route::get('password', 'password')->name('password');
         Route::post('password', 'passwordUpdate')->name('password.update');
+
+    // 2FA settings (setup / enable / disable)
+    Route::controller('AdminTwoFactorController')->group(function () {
+        Route::get('twofactor', 'show')->name('twofactor');
+        Route::post('twofactor/enable', 'enable')->name('twofactor.enable');
+        Route::post('twofactor/disable', 'disable')->name('twofactor.disable');
+    });
 
         //Notification
         Route::middleware('permission:view all notifications,admin')->group(function () {

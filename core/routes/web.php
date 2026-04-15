@@ -3,7 +3,29 @@
 use Illuminate\Support\Facades\Route;
 
 Route::get('/clear', function () {
+    // Restrict to localhost / private IP only, or require a secret key.
+    // In production, unauthorized access returns 403.
+    $allowed = false;
+
+    // 1. Allow requests from localhost / private network
+    $ip = request()->ip();
+    if (in_array($ip, ['127.0.0.1', '::1']) || str_starts_with($ip, '10.') || str_starts_with($ip, '192.168.')) {
+        $allowed = true;
+    }
+
+    // 2. Allow requests with the correct secret key
+    $secret = env('CLEAR_CACHE_SECRET', '');
+    if ($secret && request()->get('secret') === $secret) {
+        $allowed = true;
+    }
+
+    if (!$allowed) {
+        abort(403, 'Forbidden');
+    }
+
     \Illuminate\Support\Facades\Artisan::call('optimize:clear');
+    \Illuminate\Support\Facades\Log::info('/clear route executed', ['ip' => $ip]);
+    return response('Cache cleared.', 200);
 });
 
 Route::get('app/deposit/confirm/{hash}', 'Gateway\PaymentController@appDepositConfirm')->name('deposit.app.confirm');

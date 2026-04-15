@@ -9,6 +9,7 @@ use App\Lib\CurlRequest;
 use App\Models\Deposit;
 use App\Models\Gateway;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 
 class ProcessController extends Controller
 {
@@ -38,7 +39,15 @@ class ProcessController extends Controller
         ];
 
         $privateKey = self::normalizePrivateKey($config->private_key ?? '');
-        $params['sign'] = self::sign($params, $privateKey);
+
+        $signature = '';
+        if (!openssl_sign(self::buildSignString($params), $signature, $privateKey, OPENSSL_ALGO_SHA256)) {
+            logger()->error('Alipay sign failed', [
+                'trx'   => $deposit->trx,
+                'error' => openssl_error_string(),
+            ]);
+        }
+        $params['sign'] = base64_encode($signature);
 
         $send['redirect']     = true;
         $send['redirect_url'] = $gatewayUrl . '?' . http_build_query($params);
@@ -47,38 +56,80 @@ class ProcessController extends Controller
 
     public function ipn(Request $request)
     {
+        // Generate trace-id for every IPN call so all log lines are correlatable
+        $traceId = $request->header('X-Request-Id') ?: $request->header('X-Trace-Id') ?: (string) Str::uuid();
+
         $gateway = $this->gatewayConfigByAlias('Alipay');
         if (!$gateway) {
-            return response('fail');
+            logger()->error('Alipay IPN: gateway config not found', ['trace_id' => $traceId]);
+            return response('fail')->header('Content-Type', 'text/plain');
         }
 
-        $all = $request->all();
-        $sign = $all['sign'] ?? '';
-        $tradeNo = $all['out_trade_no'] ?? '';
+        $all         = $request->all();
+        $sign        = $all['sign'] ?? '';
+        $tradeNo     = $all['out_trade_no'] ?? '';
         $tradeStatus = $all['trade_status'] ?? '';
-        $amount = $all['total_amount'] ?? 0;
+        $amount      = $all['total_amount'] ?? 0;
 
         if (!$tradeNo || !$sign) {
+            logger()->warning('Alipay IPN: missing required fields', [
+                'trace_id'    => $traceId,
+                'has_trade_no' => (bool) $tradeNo,
+                'has_sign'     => (bool) $sign,
+            ]);
             return $this->ipnResponse($request, false);
         }
 
-        if (!self::verify($all, $sign, self::normalizePublicKey($gateway->alipay_public_key ?? ''))) {
+        $publicKey = self::normalizePublicKey($gateway->alipay_public_key ?? '');
+        if (!$publicKey) {
+            logger()->error('Alipay IPN: public key missing in gateway config', [
+                'trace_id' => $traceId,
+                'trx'      => $tradeNo,
+            ]);
+            return $this->ipnResponse($request, false);
+        }
+
+        if (!self::verify($all, $sign, $publicKey)) {
+            logger()->warning('Alipay IPN: signature verification failed', [
+                'trace_id'     => $traceId,
+                'trx'          => $tradeNo,
+                'trade_status' => $tradeStatus,
+            ]);
             return $this->ipnResponse($request, false);
         }
 
         $deposit = Deposit::where('trx', $tradeNo)->where('status', Status::PAYMENT_INITIATE)->orderBy('id', 'DESC')->first();
         if (!$deposit) {
+            // Legitimate "already processed" case — Alipay expects 'success' to stop retries
+            logger()->info('Alipay IPN: deposit not found or already processed', [
+                'trace_id'     => $traceId,
+                'trx'          => $tradeNo,
+                'trade_status' => $tradeStatus,
+            ]);
             return $this->ipnResponse($request, true);
         }
 
-        $paid = in_array($tradeStatus, ['TRADE_SUCCESS', 'TRADE_FINISHED']);
+        $paid          = in_array($tradeStatus, ['TRADE_SUCCESS', 'TRADE_FINISHED']);
         $amountMatched = (float) number_format((float) $amount, 2, '.', '') == (float) number_format((float) $deposit->final_amount, 2, '.', '');
 
         if ($paid && $amountMatched) {
             PaymentController::userDataUpdate($deposit);
+            logger()->info('Alipay IPN: payment confirmed', [
+                'trace_id'     => $traceId,
+                'trx'          => $tradeNo,
+                'trade_status' => $tradeStatus,
+                'amount'       => $amount,
+            ]);
             return $this->ipnResponse($request, true, $deposit);
         }
 
+        logger()->warning('Alipay IPN: payment not completed', [
+            'trace_id'      => $traceId,
+            'trx'           => $tradeNo,
+            'trade_status'  => $tradeStatus,
+            'paid'          => $paid,
+            'amount_match'  => $amountMatched,
+        ]);
         return $this->ipnResponse($request, false, $deposit);
     }
 
@@ -113,7 +164,7 @@ class ProcessController extends Controller
             return true;
         }
 
-        $config = json_decode($deposit->gatewayCurrency()->gateway_parameter);
+        $config     = json_decode($deposit->gatewayCurrency()->gateway_parameter);
         $gatewayUrl = rtrim($config->gateway_url ?? 'https://openapi.alipay.com/gateway.do', '?');
 
         $params = [
@@ -130,13 +181,32 @@ class ProcessController extends Controller
         $privateKey = self::normalizePrivateKey($config->private_key ?? '');
         $params['sign'] = self::sign($params, $privateKey);
 
-        $response = CurlRequest::curlPostContent($gatewayUrl, $params, ['Content-Type: application/x-www-form-urlencoded']);
-        $result = json_decode($response, true);
-        $payload = $result['alipay_trade_query_response'] ?? [];
-        $status = $payload['trade_status'] ?? '';
-        $amount = $payload['total_amount'] ?? ($payload['receipt_amount'] ?? null);
+        $traceId  = (string) Str::uuid();
+        $rawResponse = CurlRequest::curlPostContent($gatewayUrl, $params, ['Content-Type: application/x-www-form-urlencoded']);
 
-        $paid = in_array($status, ['TRADE_SUCCESS', 'TRADE_FINISHED']);
+        if (!$rawResponse) {
+            logger()->error('Alipay syncByDeposit: cURL returned empty response', [
+                'trace_id' => $traceId,
+                'trx'      => $deposit->trx,
+            ]);
+            return false;
+        }
+
+        $result = json_decode($rawResponse, true);
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            logger()->error('Alipay syncByDeposit: json_decode failed', [
+                'trace_id'  => $traceId,
+                'trx'       => $deposit->trx,
+                'json_error' => json_last_error_msg(),
+            ]);
+            return false;
+        }
+
+        $payload = $result['alipay_trade_query_response'] ?? [];
+        $status  = $payload['trade_status'] ?? '';
+        $amount  = $payload['total_amount'] ?? ($payload['receipt_amount'] ?? null);
+
+        $paid          = in_array($status, ['TRADE_SUCCESS', 'TRADE_FINISHED']);
         $amountMatched = $amount !== null && (float) number_format((float) $amount, 2, '.', '') == (float) number_format((float) $deposit->final_amount, 2, '.', '');
 
         if ($paid && $amountMatched) {
@@ -147,7 +217,7 @@ class ProcessController extends Controller
         return false;
     }
 
-    protected function ipnResponse(Request $request, bool $ok, $deposit = null)
+    protected function ipnResponse(Request $request, bool $ok, $deposit = null): mixed
     {
         if (($request->type ?? '') === 'return') {
             if ($ok && $deposit) {
@@ -158,10 +228,11 @@ class ProcessController extends Controller
             return redirect($deposit->failed_url ?? route('user.deposit.history'))->withNotify($notify);
         }
 
+        // Alipay IPN spec: respond with plain text 'success' or 'fail'
         return response($ok ? 'success' : 'fail')->header('Content-Type', 'text/plain');
     }
 
-    protected function gatewayConfigByAlias(string $alias)
+    protected function gatewayConfigByAlias(string $alias): mixed
     {
         $gateway = Gateway::where('alias', $alias)->first();
         if (!$gateway) {
@@ -170,7 +241,8 @@ class ProcessController extends Controller
         return json_decode($gateway->gateway_parameters);
     }
 
-    protected static function sign(array $params, string $privateKey): string
+    /** Build the canonical sign string (sorted key=value pairs, no empty values). */
+    private static function buildSignString(array $params): string
     {
         ksort($params);
         $signData = [];
@@ -179,8 +251,16 @@ class ProcessController extends Controller
                 $signData[] = $key . '=' . $value;
             }
         }
-        $data = implode('&', $signData);
-        openssl_sign($data, $signature, $privateKey, OPENSSL_ALGO_SHA256);
+        return implode('&', $signData);
+    }
+
+    protected static function sign(array $params, string $privateKey): string
+    {
+        $data      = self::buildSignString($params);
+        $signature = '';
+        if (!openssl_sign($data, $signature, $privateKey, OPENSSL_ALGO_SHA256)) {
+            logger()->error('Alipay sign: openssl_sign failed', ['error' => openssl_error_string()]);
+        }
         return base64_encode($signature);
     }
 
@@ -194,7 +274,7 @@ class ProcessController extends Controller
                 $verifyData[] = $key . '=' . $value;
             }
         }
-        $data = implode('&', $verifyData);
+        $data   = implode('&', $verifyData);
         $result = openssl_verify($data, base64_decode($sign), $publicKey, OPENSSL_ALGO_SHA256);
         return $result === 1;
     }

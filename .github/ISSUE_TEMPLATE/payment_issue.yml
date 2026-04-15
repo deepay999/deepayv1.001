@@ -1,0 +1,44 @@
+name: Payment / IPN Issue
+description: Report a payment callback failure, IPN 500, or reconciliation problem
+labels: ["payments", "bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **⚠ Security note**: Never include API keys, private keys, or passwords.
+        Include the `trace_id` from the log instead of raw secrets.
+  - type: dropdown
+    id: gateway
+    attributes:
+      label: Payment gateway
+      options:
+        - Alipay
+        - WeChat Pay
+        - Other (specify in description)
+    validations:
+      required: true
+  - type: input
+    id: trace_id
+    attributes:
+      label: trace_id (from Laravel logs)
+      placeholder: "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+    validations:
+      required: false
+  - type: textarea
+    id: description
+    attributes:
+      label: What happened?
+      description: |
+        Include:
+        - HTTP status code returned to gateway
+        - Log lines (no secrets!)
+        - Whether the deposit was created in the DB
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant log excerpt
+      render: shell
+    validations:
+      required: false
