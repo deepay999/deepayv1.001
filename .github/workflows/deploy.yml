@@ -52,8 +52,25 @@ jobs:
             echo "📦 Installing Node dependencies..."
             npm ci --prefer-offline
 
-            echo "🔨 Building frontend..."
+            echo "🔨 Building frontend (Vite)..."
             npm run build
+
+            echo "🐘 Installing PHP (Composer) dependencies..."
+            cd core
+            composer install --no-dev --optimize-autoloader --no-interaction
+
+            echo "🗄️  Running database migrations..."
+            php artisan migrate --force
+
+            echo "⚡ Caching Laravel config / routes / views..."
+            php artisan config:cache
+            php artisan route:cache
+            php artisan view:cache
+            php artisan event:cache
+
+            echo "🧹 Clearing old application cache..."
+            php artisan cache:clear
+            php artisan opcache:clear 2>/dev/null || true
 
             echo "🔁 Reloading PHP-FPM..."
             sudo systemctl reload php8.2-fpm || sudo systemctl reload php8.1-fpm || true
