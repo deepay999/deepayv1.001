@@ -56,14 +56,29 @@ class ProcessController extends Controller
 
     public function ipn()
     {
-        $ip = $_SERVER['REMOTE_ADDR'];
-        $url = 'https://api.coingate.com/v2/ips-v4';
+        $ip       = request()->ip();
+        $url      = 'https://api.coingate.com/v2/ips-v4';
         $response = CurlRequest::curlContent($url);
-        if (strpos($response, $ip) !== false) {
-            $deposit = Deposit::where('trx', $_POST['token'])->orderBy('id', 'DESC')->first();
-            if ($_POST['status'] == 'paid' && $_POST['price_amount'] == $deposit->final_amount && $deposit->status == Status::PAYMENT_INITIATE) {
-                PaymentController::userDataUpdate($deposit);
-            }
+
+        if (strpos($response, $ip) === false) {
+            abort(403, 'IP not whitelisted');
+        }
+
+        $token  = request()->post('token', '');
+        $status = request()->post('status', '');
+        $amount = request()->post('price_amount', '');
+
+        if (empty($token)) {
+            abort(400);
+        }
+
+        $deposit = Deposit::where('trx', $token)->orderBy('id', 'DESC')->first();
+        if (!$deposit || $deposit->status != Status::PAYMENT_INITIATE) {
+            return;
+        }
+
+        if ($status === 'paid' && (float)$amount >= round((float)$deposit->final_amount, 2)) {
+            PaymentController::userDataUpdate($deposit);
         }
     }
 }

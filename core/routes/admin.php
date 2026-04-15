@@ -413,6 +413,11 @@ Route::middleware('admin')->group(function () {
         Route::get('merchant/notification/history', 'merchantNotificationHistory')->name('merchant.notification.history')->middleware('permission:view merchant notifications,admin');
     });
 
+    // Security Log Analysis
+    Route::get('report/security/logs', 'SecurityLogController@index')
+        ->name('report.security.logs')
+        ->middleware('permission:view login history,admin');
+
     // Support
     Route::controller('SupportTicketController')->prefix('ticket')->name('ticket.')->group(function () {
         Route::middleware('permission:view user tickets,admin')->group(function () {

@@ -56,42 +56,53 @@ class ProcessController extends Controller{
         return json_encode($send);
     }
 
-    public function ipn(Request $request){
-        $track = $request->tran_id;
+    public function ipn(Request $request)
+    {
+        $track  = $request->tran_id;
         $status = $request->status;
+
+        if (!$track || !$status) {
+            abort(400);
+        }
+
         $deposit = Deposit::where('trx', $track)->orderBy('id', 'DESC')->first();
-        if ($status == 'VALID' && @$deposit->status == Status::PAYMENT_INITIATE) {
-            if (isset($_POST) && isset($_POST['verify_sign']) && isset($_POST['verify_key'])) {
-                $preDefineKey = explode(',', $_POST['verify_key']);
-                $newData = array();
-                if (!empty($preDefineKey)) {
-                    foreach ($preDefineKey as $value) {
-                        if (isset($_POST[$value])) {
-                            $newData[$value] = ($_POST[$value]);
-                        }
+        if (!$deposit || $deposit->status != Status::PAYMENT_INITIATE) {
+            $notify[] = ['error', 'Invalid request'];
+            return redirect('/')->withNotify($notify);
+        }
+
+        if ($status === 'VALID') {
+            $verifySign = $request->post('verify_sign');
+            $verifyKey  = $request->post('verify_key');
+
+            if ($verifySign && $verifyKey) {
+                $preDefineKey = explode(',', $verifyKey);
+                $newData = [];
+                foreach ($preDefineKey as $value) {
+                    if ($request->has($value)) {
+                        $newData[$value] = $request->post($value);
                     }
                 }
-                $parameters = json_decode($deposit->gatewayCurrency()->gateway_parameter);
 
+                $parameters = json_decode($deposit->gatewayCurrency()->gateway_parameter);
                 $newData['store_passwd'] = md5($parameters->store_password);
 
                 ksort($newData);
-                $hashString = "";
-                foreach ($newData as $key => $value) {$hashString .= $key . '=' . ($value) . '&';}
+                $hashString = '';
+                foreach ($newData as $key => $value) {
+                    $hashString .= $key . '=' . $value . '&';
+                }
                 $hashString = rtrim($hashString, '&');
-                if (md5($hashString) == $_POST['verify_sign']) {
-                    $input  = $request->except('method');
-                    $ssltxt = "";
-                    foreach ($input as $key => $value) {
-                        $ssltxt .= "$key : $value <br>";
-                    }
+
+                if (hash_equals(md5($hashString), $verifySign)) {
                     PaymentController::userDataUpdate($deposit);
                     $notify[] = ['success', 'Payment captured successfully'];
                     return redirect($deposit->success_url)->withNotify($notify);
                 }
             }
         }
-        $notify[] = ['error','Invalid request'];
+
+        $notify[] = ['error', 'Invalid request'];
         return redirect($deposit->failed_url)->withNotify($notify);
     }
 }

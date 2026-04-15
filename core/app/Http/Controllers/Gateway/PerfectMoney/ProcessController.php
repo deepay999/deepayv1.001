@@ -47,36 +47,48 @@ class ProcessController extends Controller
     }
     public function ipn()
     {
-        $deposit = Deposit::where('trx', $_POST['PAYMENT_ID'])->orderBy('id', 'DESC')->first();
-        $pmAcc = json_decode($deposit->gatewayCurrency()->gateway_parameter);
+        $post = request()->post();
+
+        if (empty($post['PAYMENT_ID'])) {
+            abort(400);
+        }
+
+        $deposit = Deposit::where('trx', $post['PAYMENT_ID'])->orderBy('id', 'DESC')->first();
+        if (!$deposit || $deposit->status != Status::PAYMENT_INITIATE) {
+            return;
+        }
+
+        $pmAcc      = json_decode($deposit->gatewayCurrency()->gateway_parameter);
         $passphrase = strtoupper(md5($pmAcc->passphrase));
 
-        define('ALTERNATE_PHRASE_HASH', $passphrase);
-        define('PATH_TO_LOG', '/somewhere/out/of/document_root/');
         $string =
-            $_POST['PAYMENT_ID'] . ':' . $_POST['PAYEE_ACCOUNT'] . ':' .
-            $_POST['PAYMENT_AMOUNT'] . ':' . $_POST['PAYMENT_UNITS'] . ':' .
-            $_POST['PAYMENT_BATCH_NUM'] . ':' .
-            $_POST['PAYER_ACCOUNT'] . ':' . ALTERNATE_PHRASE_HASH . ':' .
-            $_POST['TIMESTAMPGMT'];
+            ($post['PAYMENT_ID']        ?? '') . ':' .
+            ($post['PAYEE_ACCOUNT']     ?? '') . ':' .
+            ($post['PAYMENT_AMOUNT']    ?? '') . ':' .
+            ($post['PAYMENT_UNITS']     ?? '') . ':' .
+            ($post['PAYMENT_BATCH_NUM'] ?? '') . ':' .
+            ($post['PAYER_ACCOUNT']     ?? '') . ':' .
+            $passphrase . ':' .
+            ($post['TIMESTAMPGMT']      ?? '');
 
-        $hash = strtoupper(md5($string));
-        $hash2 = $_POST['V2_HASH'];
+        $hash  = strtoupper(md5($string));
+        $hash2 = $post['V2_HASH'] ?? '';
 
-        if ($hash == $hash2) {
+        if (!hash_equals($hash, $hash2)) {
+            return;
+        }
 
-            foreach ($_POST as $key => $value) {
-                $details[$key] = $value;
-            }
-            $deposit->detail = $details;
-            $deposit->save();
+        $deposit->detail = $post;
+        $deposit->save();
 
-            $amount = $_POST['PAYMENT_AMOUNT'];
-            $unit = $_POST['PAYMENT_UNITS'];
-            if ($_POST['PAYEE_ACCOUNT'] == $pmAcc->wallet_id && $unit == $deposit->method_currency && $amount == round($deposit->final_amount, 2) && $deposit->status == Status::PAYMENT_INITIATE) {
-                //Update User Data
-                PaymentController::userDataUpdate($deposit);
-            }
+        $amount = (float)($post['PAYMENT_AMOUNT'] ?? 0);
+        $unit   = $post['PAYMENT_UNITS'] ?? '';
+
+        if ($post['PAYEE_ACCOUNT'] === $pmAcc->wallet_id
+            && $unit === $deposit->method_currency
+            && $amount >= round((float)$deposit->final_amount, 2)
+        ) {
+            PaymentController::userDataUpdate($deposit);
         }
     }
 }
