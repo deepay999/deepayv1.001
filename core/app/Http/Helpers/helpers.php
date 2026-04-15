@@ -225,9 +225,8 @@ function getPageSections($arr = false)
 
 function getImage($image, $size = null, $isAvatar = false)
 {
-    $clean = '';
-    if (file_exists($image) && is_file($image)) {
-        return asset($image) . $clean;
+    if (!empty($image) && is_string($image) && file_exists($image) && is_file($image)) {
+        return asset($image);
     }
     if ($isAvatar) {
         return asset('assets/images/avatar.jpg');
@@ -591,6 +590,12 @@ function convertToReadableSize($size)
 
 function frontendImage($sectionName, $image, $size = null, $seo = false)
 {
+    if (empty($image) || !is_string($image)) {
+        if ($size) {
+            return route('placeholder.image', $size);
+        }
+        return asset('assets/images/default.png');
+    }
     if ($seo) {
         return getImage('assets/images/frontend/' . $sectionName . '/seo/' . $image, $size);
     }

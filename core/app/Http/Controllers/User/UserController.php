@@ -241,6 +241,17 @@ class UserController extends Controller
         return view('Template::user.notification_setting', compact('pageTitle', 'user'));
     }
 
+    public function loyaltyPoints()
+    {
+        if (!moduleIsEnable('loyalty_points')) {
+            $notify[] = ['error', 'Loyalty points feature is not available'];
+            return to_route('user.home')->withNotify($notify);
+        }
+        $pageTitle = 'Loyalty Points';
+        $points    = \App\Models\UserPoint::where('user_id', auth()->id())->orderBy('id', 'desc')->paginate(getPaginate());
+        return view('Template::user.loyalty_points', compact('pageTitle', 'points'));
+    }
+
     public function notificationSettingsUpdate(Request $request)
     {
         $user                              = auth()->user();

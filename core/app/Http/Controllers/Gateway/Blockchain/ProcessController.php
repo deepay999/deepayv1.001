@@ -61,19 +61,39 @@ class ProcessController extends Controller
 
     public function ipn(Request $request)
     {
-        $track = $request->invoice_id;
-        $value_in_btc = $request->value / 100000000;
+        $track       = $request->query('invoice_id', '');
+        $valueSatosh = (int)$request->query('value', 0);
+        $valueInBtc  = $valueSatosh / 100000000;
+        $address     = $request->query('address', '');
+        $secret      = $request->query('secret', '');
+        $confirmations = (int)$request->query('confirmations', 0);
+
+        if (empty($track)) {
+            abort(400);
+        }
 
         $deposit = Deposit::where('trx', $track)->orderBy('id', 'DESC')->first();
-
-        foreach ($_GET as $key => $value) {
-            $details[$key] = $value;
+        if (!$deposit || $deposit->status != Status::PAYMENT_INITIATE) {
+            return response('*ok*');
         }
-        $deposit->detail = $details;
+
+        $blockchainAcc = json_decode($deposit->gatewayCurrency()->gateway_parameter);
+        $expectedSecret = $blockchainAcc->secret ?? '';
+
+        if (empty($expectedSecret) || !hash_equals($expectedSecret, $secret)) {
+            abort(403, 'Invalid secret');
+        }
+
+        $deposit->detail = $request->query();
         $deposit->save();
 
-        if ($deposit->btc_amount == $value_in_btc && $request->address == $deposit->btc_wallet && $request->secret == "MySecret" && $request->confirmations > 2 && $deposit->status == Status::PAYMENT_INITIATE) {
+        if ((float)$deposit->btc_amount >= $valueInBtc
+            && $address === $deposit->btc_wallet
+            && $confirmations >= 3
+        ) {
             PaymentController::userDataUpdate($deposit);
         }
+
+        return response('*ok*');
     }
 }
