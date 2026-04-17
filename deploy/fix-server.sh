@@ -17,7 +17,7 @@ fail() { echo -e "${RED}[FAIL] $*${NC}" >&2; exit 1; }
 
 SITE_DOMAIN="${SITE_DOMAIN:-www.deepay.srl}"
 DEPLOY_PATH="${DEPLOY_PATH:-/www/wwwroot/${SITE_DOMAIN}}"
-PHP_VERSION="${PHP_VERSION:-8.3}"
+PHP_VERSION="${PHP_VERSION:-8.4}"
 SITE_USER="${SITE_USER:-www}"
 PHP_MAJOR_MINOR="${PHP_VERSION//./}"
 
