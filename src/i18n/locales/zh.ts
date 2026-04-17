@@ -98,6 +98,8 @@ const zh: Record<string, string> = {
   'tab.home':     '首页',
   'tab.wallet':   '钱包',
   'tab.transfer': '转账',
+  'tab.cards':    '卡片',
+  'tab.wallets':  '多币种钱包',
   'tab.iban':     'IBAN',
   'tab.activity': '活动',
   'tab.points':   '积分',

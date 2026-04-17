@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Home, Wallet, ArrowLeftRight, Building2, Activity, Star } from 'lucide-react';
+import { Home, Wallet, ArrowLeftRight, Building2, Activity, Star, QrCode } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { HomePage } from './components/HomePage';
 import { WalletsPage } from './components/WalletsPage';
@@ -9,6 +9,7 @@ import { IBANPage } from './components/IBANPage';
 import { ActivityPage } from './components/ActivityPage';
 import { ProfilePage } from './components/ProfilePage';
 import { PointsPage } from './components/PointsPage';
+import { QRCodePage } from './components/QRCodePage';
 import { AddMoneyModal } from './components/AddMoneyModal';
 import { SplashScreen } from './components/SplashScreen';
 import { PageSwipeTransition } from './components/PageTransition';
@@ -31,9 +32,11 @@ export default function App() {
   const [showAddMoneyModal, setAddMoneyModal] = useState(false);
   const [showSplash, setShowSplash]           = useState(true);
   const [showProfile, setShowProfile]         = useState(false);
+  const [showQR, setShowQR]                   = useState(false);
 
   const renderPage = () => {
     if (showProfile) return <ProfilePage onBack={() => setShowProfile(false)} onViewWebsite={() => {}} />;
+    if (showQR)      return <QRCodePage onBack={() => setShowQR(false)} />;
     switch (activeTab) {
       case 'home':     return <HomePage onAddMoney={() => setAddMoneyModal(true)} onTransfer={() => setActiveTab('transfer')} onOpenProfile={() => setShowProfile(true)} />;
       case 'wallet':   return <WalletsPage onAddMoney={() => setAddMoneyModal(true)} onTransfer={() => setActiveTab('transfer')} onWithdraw={() => setActiveTab('transfer')} />;
@@ -80,7 +83,7 @@ export default function App() {
               className="flex-shrink-0 border-t border-neutral-100 bg-white"
               style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
             >
-              <div className="flex items-center justify-around px-1 h-16">
+              <div className="flex items-center justify-around px-2 h-16">
                 {TABS.map((tab) => {
                   const isActive = activeTab === tab.id;
                   return (
@@ -88,7 +91,7 @@ export default function App() {
                       key={tab.id}
                       onClick={() => setActiveTab(tab.id)}
                       whileTap={{ scale: 0.88 }}
-                      className="flex flex-col items-center gap-1 px-2 py-1 relative"
+                      className="flex flex-col items-center gap-1 px-3 py-1 relative"
                     >
                       {/* Pill background for active tab */}
                       {isActive && (
@@ -112,6 +115,26 @@ export default function App() {
                     </motion.button>
                   );
                 })}
+
+                {/* QR scan FAB */}
+                <motion.button
+                  whileTap={{ scale: 0.88 }}
+                  onClick={() => setShowQR(v => !v)}
+                  className="flex flex-col items-center gap-1 px-3 py-1"
+                >
+                  <div
+                    className={`w-10 h-10 rounded-2xl flex items-center justify-center transition-all duration-200 ${
+                      showQR
+                        ? 'bg-emerald-500 shadow-lg shadow-emerald-500/30'
+                        : 'bg-neutral-900 shadow-md shadow-black/20'
+                    }`}
+                  >
+                    <QrCode className="w-5 h-5 text-white" strokeWidth={2} />
+                  </div>
+                  <span className={`text-[10px] font-medium ${showQR ? 'text-emerald-600' : 'text-neutral-400'}`}>
+                    QR
+                  </span>
+                </motion.button>
               </div>
             </motion.nav>
           )}
