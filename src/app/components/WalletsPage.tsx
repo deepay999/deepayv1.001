@@ -27,6 +27,12 @@ interface LedgerEntry {
 interface WalletsPageProps {
   /** When true, the Transfer quick-action is pre-highlighted */
   showTransferTab?: boolean;
+  /** Called when the user taps "Add money" */
+  onAddMoney?: () => void;
+  /** Called when the user taps "Transfer" */
+  onTransfer?: () => void;
+  /** Called when the user taps "Withdraw" */
+  onWithdraw?: () => void;
 }
 
 /* ── Currency config ──────────────────────────────────────── */
@@ -75,7 +81,7 @@ const MOCK_LEDGER: LedgerEntry[] = [
 ];
 
 /* ── Component ────────────────────────────────────────────── */
-export function WalletsPage({ showTransferTab = false }: WalletsPageProps) {
+export function WalletsPage({ showTransferTab = false, onAddMoney, onTransfer, onWithdraw }: WalletsPageProps) {
   const [wallets,         setWallets]         = useState<WalletBalance[]>(MOCK_WALLETS);
   const [ledger,          setLedger]          = useState<LedgerEntry[]>(MOCK_LEDGER);
   const [activeCurrency,  setActiveCurrency]  = useState<string>('EUR');
@@ -85,18 +91,30 @@ export function WalletsPage({ showTransferTab = false }: WalletsPageProps) {
 
   /* Fetch from API when a token is available */
   useEffect(() => {
-    const token = localStorage.getItem('api_token');
+    // Use the canonical token key shared across the app
+    const token = localStorage.getItem('deepay_token');
     if (!token) return;
 
     setLoading(true);
 
     Promise.all([
-      fetch('/api/wallets',         { headers: { Authorization: `Bearer ${token}` } }).then(r => r.json()),
-      fetch('/api/wallets/ledger',  { headers: { Authorization: `Bearer ${token}` } }).then(r => r.json()),
+      fetch('/api/wallets',        { headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' } }).then(r => r.json()),
+      fetch('/api/wallets/ledger', { headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' } }).then(r => r.json()),
     ])
       .then(([walletRes, ledgerRes]) => {
-        if (walletRes.data?.wallets)  setWallets(walletRes.data.wallets);
-        if (walletRes.data?.reward_points !== undefined) setRewardPoints(walletRes.data.reward_points);
+        // DeepayController returns a plain array: [{currency, available, frozen}, ...]
+        // WalletController (apiResponse format) returns: {data: {wallets: [...], reward_points: ...}}
+        if (Array.isArray(walletRes)) {
+          setWallets(walletRes.map((w: { currency: string; available: number; frozen: number }) => ({
+            currency:  w.currency,
+            available: w.available ?? 0,
+            frozen:    w.frozen    ?? 0,
+            total:     (w.available ?? 0) + (w.frozen ?? 0),
+          })));
+        } else if (walletRes.data?.wallets) {
+          setWallets(walletRes.data.wallets);
+          if (walletRes.data.reward_points !== undefined) setRewardPoints(walletRes.data.reward_points);
+        }
         if (ledgerRes.data?.ledger?.data) setLedger(ledgerRes.data.ledger.data);
       })
       .catch(() => { /* stay on mock data */ })
@@ -187,17 +205,22 @@ export function WalletsPage({ showTransferTab = false }: WalletsPageProps) {
 
               {/* Action buttons */}
               <div className="flex gap-2 mt-4">
-                {['Add money', 'Transfer', 'Withdraw'].map(action => (
+                {([
+                  { label: 'Add money', handler: onAddMoney },
+                  { label: 'Transfer',  handler: onTransfer },
+                  { label: 'Withdraw',  handler: onWithdraw },
+                ] as const).map(({ label, handler }) => (
                   <motion.button
-                    key={action}
+                    key={label}
                     whileTap={{ scale: 0.95 }}
+                    onClick={handler}
                     className={`flex-1 py-2 rounded-xl text-xs font-semibold transition-all ${
-                      action === 'Transfer' && showTransferTab
+                      label === 'Transfer' && showTransferTab
                         ? 'bg-neutral-900 text-white shadow'
                         : 'bg-white text-neutral-700 border border-neutral-200'
                     }`}
                   >
-                    {action}
+                    {label}
                   </motion.button>
                 ))}
               </div>
