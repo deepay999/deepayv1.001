@@ -466,12 +466,12 @@ Route::middleware(['admin', 'admin.2fa'])->group(function () {
         Route::get('password', 'password')->name('password');
         Route::post('password', 'passwordUpdate');
 
-    // 2FA settings (setup / enable / disable)
-    Route::controller('AdminTwoFactorController')->group(function () {
-        Route::get('twofactor', 'show')->name('twofactor');
-        Route::post('twofactor/enable', 'enable');
-        Route::post('twofactor/disable', 'disable');
-    });
+        // 2FA settings (setup / enable / disable)
+        Route::controller('AdminTwoFactorController')->group(function () {
+            Route::get('twofactor', 'show')->name('twofactor');
+            Route::post('twofactor/enable', 'enable');
+            Route::post('twofactor/disable', 'disable');
+        });
 
         //Notification
         Route::middleware('permission:view all notifications,admin')->group(function () {

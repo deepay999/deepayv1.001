@@ -313,4 +313,3 @@ Route::namespace('Api')->name('api.')->group(function () {
         Route::post('add-device-token', 'UserController@addDeviceToken');
     });
 });
-

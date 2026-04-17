@@ -110,7 +110,6 @@ Route::namespace('Merchant')->middleware('merchant')->group(function () {
                 Route::get('change-pin', 'changePassword')->name('change.password');
                 Route::post('change-pin', 'submitPassword');
             });
-
         });
     });
 });
