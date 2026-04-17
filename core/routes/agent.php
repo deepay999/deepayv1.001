@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Route;
 |--------------------------------------------------------------------------
 */
 
-Route::namespace('Agent\Auth')->name('agent.')->middleware('agent.guest')->group(function () {
+Route::namespace('Agent\Auth')->middleware('agent.guest')->group(function () {
     Route::controller('LoginController')->group(function () {
         Route::get('/login', 'showLoginForm')->name('login');
         Route::post('/login', 'login');
@@ -19,18 +19,18 @@ Route::namespace('Agent\Auth')->name('agent.')->middleware('agent.guest')->group
     Route::controller('RegisterController')->group(function () {
         Route::get('register', 'showRegistrationForm')->name('register');
         Route::post('register', 'register');
-        Route::post('check-user', 'checkUser')->name('checkUser')->withoutMiddleware('guest');
+        Route::post('check-user', 'checkUser')->withoutMiddleware('guest');
     });
 
     Route::controller('ForgotPasswordController')->prefix('pin')->name('password.')->group(function () {
         Route::get('reset', 'showLinkRequestForm')->name('request');
-        Route::post('email', 'sendResetCodeEmail')->name('email');
+        Route::post('email', 'sendResetCodeEmail');
         Route::get('code-verify', 'codeVerify')->name('code.verify');
-        Route::post('verify-code', 'verifyCode')->name('verify.code');
+        Route::post('verify-code', 'verifyCode');
     });
 
     Route::controller('ResetPasswordController')->group(function () {
-        Route::post('password/reset', 'reset')->name('password.update');
+        Route::post('password/reset', 'reset');
         Route::get('password/reset/{token}', 'showResetForm')->name('password.reset');
     });
 
@@ -41,18 +41,18 @@ Route::namespace('Agent\Auth')->name('agent.')->middleware('agent.guest')->group
 });
 
 
-Route::namespace('Agent')->middleware('agent')->name('agent.')->group(function () {
+Route::namespace('Agent')->middleware('agent')->group(function () {
 
     //authorization
     Route::get('agent-data', 'AgentController@userData')->name('data')->middleware('mobile_verified:agent');
-    Route::post('agent-data-submit', 'AgentController@userDataSubmit')->name('data.submit')->middleware('mobile_verified:agent');
+    Route::post('agent-data-submit', 'AgentController@userDataSubmit')->middleware('mobile_verified:agent');
 
     Route::controller('AuthorizationController')->group(function () {
         Route::get('authorization', 'authorizeForm')->name('authorization');
         Route::get('resend-verify/{type}', 'sendVerifyCode')->name('send.verify.code');
-        Route::post('verify-email', 'emailVerification')->name('verify.email');
-        Route::post('verify-mobile', 'mobileVerification')->name('verify.mobile');
-        Route::post('verify-g2fa', 'g2faVerification')->name('2fa.verify');
+        Route::post('verify-email', 'emailVerification');
+        Route::post('verify-mobile', 'mobileVerification');
+        Route::post('verify-g2fa', 'g2faVerification');
     });
 
 
@@ -66,7 +66,7 @@ Route::namespace('Agent')->middleware('agent')->name('agent.')->group(function (
 
                 Route::middleware('kyc.agent')->group(function () {
 
-                    Route::any('deposit/history', 'depositHistory')->name('add.money.history');
+                    Route::any('deposit/history', 'depositHistory')->name('deposit.history');
 
 
                     //Report
@@ -76,25 +76,25 @@ Route::namespace('Agent')->middleware('agent')->name('agent.')->group(function (
 
                 //2FA
                 Route::get('twofactor', 'show2faForm')->name('twofactor');
-                Route::post('twofactor/enable', 'create2fa')->name('twofactor.enable');
-                Route::post('twofactor/disable', 'disable2fa')->name('twofactor.disable');
+                Route::post('twofactor/enable', 'create2fa');
+                Route::post('twofactor/disable', 'disable2fa');
 
                 //KYC
                 Route::get('kyc-form', 'kycForm')->name('kyc.form');
                 Route::get('kyc-data', 'kycData')->name('kyc.data');
-                Route::post('kyc-submit', 'kycSubmit')->name('kyc.submit');
+                Route::post('kyc-submit', 'kycSubmit');
 
 
-                Route::post('add-device-token', 'addDeviceToken')->name('add.device.token');
+                Route::post('add-device-token', 'addDeviceToken');
 
                 Route::get('notification/settings', 'notificationSetting')->name('notification.setting');
-                Route::post('notification/settings', 'notificationSettingsUpdate')->name('notification.setting');
+                Route::post('notification/settings', 'notificationSettingsUpdate');
             });
 
             // Cash in
             Route::prefix('cash-in')->name('cash.in.')->middleware(['kyc.agent', 'module:cash_in'])->controller('CashInController')->group(function () {
                 Route::get('/', 'create')->name('create');
-                Route::post('store', 'store')->name('store');
+                Route::post('store', 'store');
                 Route::get('details/{id}', 'details')->name('details');
                 Route::get('history', 'history')->name('history');
                 Route::get('pdf/{id}', 'pdf')->name('pdf');
@@ -104,24 +104,24 @@ Route::namespace('Agent')->middleware('agent')->name('agent.')->group(function (
             // add money
             Route::prefix('add-money')->name('add.money.')->middleware(['kyc.agent', 'module:add_money,agent'])->controller('AddMoneyController')->group(function () {
                 Route::get('/', 'create')->name('create');
-                Route::post('store', 'store')->name('store');
+                Route::post('store', 'store');
                 Route::get('history', 'History')->name('history');
             });
 
             // Withdraw
             Route::controller('WithdrawController')->prefix('withdraw')->name('withdraw.')->middleware(['kyc.agent'])->group(function () {
                 Route::get('/', 'withdrawMoney')->name('index');
-                Route::post('/', 'withdrawStore')->name('money');
+                Route::post('/', 'withdrawStore');
                 Route::get('preview', 'withdrawPreview')->name('preview');
-                Route::post('preview', 'withdrawSubmit')->name('submit');
+                Route::post('preview', 'withdrawSubmit');
                 Route::get('history', 'withdrawLog')->name('history');
 
                 // save account data
                 Route::get('account/setting', 'accountSetting')->name('account.setting');
                 Route::get('account/save/{methodId}', 'saveAccount')->name('account.save');
-                Route::post('account/save-data/{methodId?}', 'saveAccountData')->name('account.save.data');
+                Route::post('account/save-data/{methodId?}', 'saveAccountData');
                 Route::get('account/edit/{id}', 'editAccount')->name('account.edit');
-                Route::post('account/delete/{id}', 'deleteAccount')->name('account.delete');
+                Route::post('account/delete/{id}', 'deleteAccount');
             });
 
             //Profile setting
@@ -138,6 +138,6 @@ Route::namespace('Agent')->middleware('agent')->name('agent.')->group(function (
 Route::prefix('deposit')->name('agent.deposit.')->middleware('kyc.agent')->controller('Gateway\PaymentController')->group(function () {
     Route::get('confirm', 'depositConfirm')->name('confirm');
     Route::get('manual', 'manualDepositConfirm')->name('manual.confirm');
-    Route::post('manual', 'manualDepositUpdate')->name('manual.update');
+    Route::post('manual', 'manualDepositUpdate');
     Route::get('swan/callback/{trx}', 'Gateway\Swan\ProcessController@callback')->name('swan.callback');
 });

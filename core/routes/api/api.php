@@ -159,10 +159,10 @@ Route::namespace('Api')->name('api.')->group(function () {
             //Send money
 
             Route::controller('SendMoneyController')->prefix('send-money')->middleware(['module:send_money', 'kyc'])->group(function () {
-                Route::get('/', 'create')->name('create');
-                Route::post('store', 'store')->name('store');
-                Route::get('details/{id}', 'details')->name('details');
-                Route::get('history', 'history')->name('history');
+                Route::get('/', 'create');
+                Route::post('store', 'store');
+                Route::get('details/{id}', 'details');
+                Route::get('history', 'history');
                 Route::get('pdf/{id}', 'pdf');
             });
 
@@ -185,7 +185,7 @@ Route::namespace('Api')->name('api.')->group(function () {
             //Make payment
 
             Route::controller('MakePaymentController')->prefix('make-payment')->middleware(['module:make_payment', 'kyc'])->group(function () {
-                Route::get('create', 'create')->name('make.payment');
+                Route::get('create', 'create');
                 Route::post('store', 'store');
                 Route::get('history', 'history');
                 Route::get('details/{id}', 'details');
@@ -247,11 +247,11 @@ Route::namespace('Api')->name('api.')->group(function () {
             //gift card
             Route::prefix('gift-card')->middleware(['module:gift_card'])->controller('GiftCardController')->group(function () {
                 Route::get('create', 'create');
-                Route::get('show/{id}', 'show')->name('show');
-                Route::post('purchase/{id}', 'purchase')->name('purchase');
-                Route::get('history', 'history')->name('history');
-                Route::get('details/{id}', 'details')->name('details');
-                Route::get('pdf/{id}', 'pdf')->name('pdf');
+                Route::get('show/{id}', 'show');
+                Route::post('purchase/{id}', 'purchase');
+                Route::get('history', 'history');
+                Route::get('details/{id}', 'details');
+                Route::get('pdf/{id}', 'pdf');
             });
 
             //Donation
@@ -299,7 +299,7 @@ Route::namespace('Api')->name('api.')->group(function () {
                 Route::post('store', 'store')->name('store');
                 Route::get('show/{id}', 'show')->name('show');
                 Route::get('details/{id}', 'details')->name('details');
-                Route::get('history', 'history')->name('history');
+                Route::get('history', 'history');
             });
         });
 
@@ -314,7 +314,3 @@ Route::namespace('Api')->name('api.')->group(function () {
     });
 });
 
-// ── Public webhook endpoints (no auth middleware) ──────────────────────────
-Route::namespace('Api')->group(function () {
-    Route::post('webhooks/airwallex', 'AirwallexWebhookController@handle');
-});
