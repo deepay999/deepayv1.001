@@ -1304,3 +1304,42 @@ function verifyQrCodeForLogin($encodedCode, $guard)
     $message[] = "Qr code login successfully";
     return  apiResponse('success', 'success', $message);
 }
+
+function seoMeta($seoContents): string
+{
+    if (!$seoContents) {
+        return '';
+    }
+
+    $title              = e(@$seoContents->title ?? '');
+    $description        = e(@$seoContents->description ?? '');
+    $socialTitle        = e(@$seoContents->social_title ?? $title);
+    $socialDescription  = e(@$seoContents->social_description ?? $description);
+
+    $imageUrl = '';
+    if (!empty($seoContents->image)) {
+        $imageUrl = getImage(getFilePath('seo') . '/' . $seoContents->image, getFileSize('seo'));
+    }
+
+    $html = '';
+
+    if ($title) {
+        $html .= '<title>' . $title . '</title>' . PHP_EOL;
+        $html .= '<meta property="og:title" content="' . $socialTitle . '" />' . PHP_EOL;
+        $html .= '<meta name="twitter:title" content="' . $socialTitle . '" />' . PHP_EOL;
+    }
+
+    if ($description) {
+        $html .= '<meta name="description" content="' . $description . '" />' . PHP_EOL;
+        $html .= '<meta property="og:description" content="' . $socialDescription . '" />' . PHP_EOL;
+        $html .= '<meta name="twitter:description" content="' . $socialDescription . '" />' . PHP_EOL;
+    }
+
+    if ($imageUrl) {
+        $html .= '<meta property="og:image" content="' . e($imageUrl) . '" />' . PHP_EOL;
+        $html .= '<meta name="twitter:image" content="' . e($imageUrl) . '" />' . PHP_EOL;
+        $html .= '<meta name="twitter:card" content="summary_large_image" />' . PHP_EOL;
+    }
+
+    return $html;
+}

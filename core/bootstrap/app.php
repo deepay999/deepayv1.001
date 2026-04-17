@@ -86,41 +86,40 @@ return Application::configure(basePath: dirname(__DIR__))
             AddQueuedCookiesToResponse::class,
             StartSession::class,
             ShareErrorsFromSession::class,
-            SubstituteBindings::class,
             LanguageMiddleware::class,
             ActiveTemplateMiddleware::class,
             SubstituteBindings::class,
             VerifyCsrfToken::class,
         ]);
         $middleware->alias([
-            'admin'       => RedirectIfNotAdmin::class,
+            'admin' => RedirectIfNotAdmin::class,
             'admin.guest' => RedirectIfAdmin::class,
-            'admin.2fa'   => AdminForce2FA::class,
+            'admin.2fa' => AdminForce2FA::class,
 
-            'agent'       => RedirectIfNotAgent::class,
+            'agent' => RedirectIfNotAgent::class,
             'agent.guest' => RedirectIfAgent::class,
 
-            'merchant'       => RedirectIfNotMerchant::class,
+            'merchant' => RedirectIfNotMerchant::class,
             'merchant.guest' => RedirectIfMerchant::class,
 
-            'maintenance'           => MaintenanceMode::class,
+            'maintenance' => MaintenanceMode::class,
             'registration.complete' => RegistrationStep::class,
-            'demo'                  => Demo::class,
-            'module'                => Module::class,
+            'demo' => Demo::class,
+            'module' => Module::class,
 
-            'auth'             => Authenticate::class,
-            'check.status'     => CheckStatus::class,
-            'mobile.verify'    => MobileVerify::class,
-            'kyc'              => KycMiddleware::class,
-            'kyc.merchant'     => KycMerchantMiddleware::class,
-            'kyc.agent'        => KycAgentMiddleware::class,
-            'guest'            => RedirectIfAuthenticated::class,
-            'mobile_verified'  => MobileNumberVerification::class,
+            'auth' => Authenticate::class,
+            'check.status' => CheckStatus::class,
+            'mobile.verify' => MobileVerify::class,
+            'kyc' => KycMiddleware::class,
+            'kyc.merchant' => KycMerchantMiddleware::class,
+            'kyc.agent' => KycAgentMiddleware::class,
+            'guest' => RedirectIfAuthenticated::class,
+            'mobile_verified' => MobileNumberVerification::class,
             'token.permission' => TokenPermission::class,
             'permission' => \Spatie\Permission\Middleware\PermissionMiddleware::class,
         ]);
         $middleware->validateCsrfTokens(
-            except: ['user/deposit', 'ipn*','pusher*']
+            except: ['user/deposit', 'ipn*', 'pusher*']
         );
     })
     ->withExceptions(function (Exceptions $exceptions) {

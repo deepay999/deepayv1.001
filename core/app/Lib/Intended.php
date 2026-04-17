@@ -13,7 +13,15 @@ class Intended
             return false;
         }
         $intendedUrls = config('intended_routes');
-        $previousRouteName = Route::getRoutes()->match(request()->create(url()->previousPath()))->getName();
+
+        try {
+            $previousRouteName = Route::getRoutes()->match(request()->create(url()->previousPath()))->getName();
+        } catch (\Throwable $e) {
+            // Previous URL doesn't match any route (direct visit, external referrer, etc.)
+            session()->forget('intended_info');
+            return false;
+        }
+
         if (array_key_exists($previousRouteName, $intendedUrls ?? [])) {
             $previousUrl = url()->previous();
             $previousUrlParts = parse_url($previousUrl);

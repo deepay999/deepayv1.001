@@ -13,7 +13,7 @@ warn() { echo -e "${YELLOW}[WARN] $*${NC}"; }
 fail() { echo -e "${RED}[FAIL] $*${NC}" >&2; exit 1; }
 
 # ── Configuration (override via environment) ──────────────────────────────────
-DEPLOY_PATH="${DEPLOY_PATH:-/www/wwwroot/www.deepay.srl}"
+DEPLOY_PATH="${DEPLOY_PATH:-/www/wwwroot/deepay.srl}"
 CORE_PATH="${CORE_PATH:-${DEPLOY_PATH}/core}"
 GIT_BRANCH="${GIT_BRANCH:-main}"
 PHP_BIN="${PHP_BIN:-php}"

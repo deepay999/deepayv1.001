@@ -1,4 +1,4 @@
-import { StrictMode } from 'react';
+import { StrictMode, useState, useEffect } from 'react';
 import { createRoot } from 'react-dom/client';
 import './styles/index.css';
 import './i18n/i18n';
@@ -8,14 +8,46 @@ import { LanguageProvider } from './i18n/LanguageProvider';
 
 /**
  * Device detection: mobile users get the banking app, desktop users get the landing page.
- * Uses both screen width and user-agent to handle edge cases (tablets, etc.).
+ * UA takes priority; screen width is only used as fallback for non-UA-identified devices.
  */
 function isMobileDevice(): boolean {
   const uaMobile = /iPhone|iPad|iPod|Android|webOS|BlackBerry|IEMobile|Opera Mini/i.test(
     navigator.userAgent,
   );
-  const narrowScreen = window.innerWidth < 768;
+  // Use matchMedia for reliable CSS-breakpoint-level detection
+  const narrowScreen = window.matchMedia('(max-width: 767px)').matches;
   return uaMobile || narrowScreen;
+}
+
+/** Root component — re-renders on viewport resize so switching orientations works */
+function RootApp() {
+  const [isMobile, setIsMobile] = useState(isMobileDevice);
+
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 767px)');
+    const handler = () => {
+      setIsMobile(isMobileDevice());
+    };
+    // Modern browsers
+    if (mq.addEventListener) {
+      mq.addEventListener('change', handler);
+    } else {
+      mq.addListener(handler); // Safari < 14 fallback
+    }
+    return () => {
+      if (mq.removeEventListener) {
+        mq.removeEventListener('change', handler);
+      } else {
+        mq.removeListener(handler);
+      }
+    };
+  }, []);
+
+  return (
+    <LanguageProvider>
+      {isMobile ? <App /> : <DeepayLandingPage />}
+    </LanguageProvider>
+  );
 }
 
 function mountApp() {
@@ -27,12 +59,9 @@ function mountApp() {
 
   try {
     const root = createRoot(container);
-    const mobile = isMobileDevice();
     root.render(
       <StrictMode>
-        <LanguageProvider>
-          {mobile ? <App /> : <DeepayLandingPage />}
-        </LanguageProvider>
+        <RootApp />
       </StrictMode>,
     );
 

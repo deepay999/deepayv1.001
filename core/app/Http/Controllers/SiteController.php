@@ -20,20 +20,20 @@ class SiteController extends Controller
     public function index()
     {
 
-        $pageTitle   = 'Home';
-        $sections    = Page::where('tempname', activeTemplate())->where('slug', '/')->first();
-        $seoContents = $sections->seo_content;
-        $seoImage    = @$seoContents->image ? getImage(getFilePath('seo') . '/' . @$seoContents->image, getFileSize('seo')) : null;
+        $pageTitle = 'Home';
+        $sections = Page::where('tempname', activeTemplate())->where('slug', '/')->first();
+        $seoContents = $sections?->seo_content;
+        $seoImage = @$seoContents->image ? getImage(getFilePath('seo') . '/' . @$seoContents->image, getFileSize('seo')) : null;
         return view('Template::home', compact('pageTitle', 'sections', 'seoContents', 'seoImage'));
     }
 
     public function contact()
     {
-        $pageTitle   = "Contact Us";
-        $user        = auth()->user();
-        $sections    = Page::where('tempname', activeTemplate())->where('slug', 'contact')->first();
-        $seoContents = $sections->seo_content;
-        $seoImage    = @$seoContents->image ? getImage(getFilePath('seo') . '/' . @$seoContents->image, getFileSize('seo')) : null;
+        $pageTitle = "Contact Us";
+        $user = auth()->user();
+        $sections = Page::where('tempname', activeTemplate())->where('slug', 'contact')->first();
+        $seoContents = $sections?->seo_content;
+        $seoImage = @$seoContents->image ? getImage(getFilePath('seo') . '/' . @$seoContents->image, getFileSize('seo')) : null;
 
         return view('Template::contact', compact('pageTitle', 'user', 'sections', 'seoContents', 'seoImage'));
     }
@@ -42,10 +42,10 @@ class SiteController extends Controller
     {
         $request->validate([
             'firstname' => 'required',
-            'lastname'  => 'required',
-            'email'     => 'required',
-            'subject'   => 'required|string|max:255',
-            'message'   => 'required',
+            'lastname' => 'required',
+            'email' => 'required',
+            'subject' => 'required|string|max:255',
+            'message' => 'required',
         ]);
 
         $request->session()->regenerateToken();
@@ -57,28 +57,28 @@ class SiteController extends Controller
 
         $random = getNumber();
 
-        $ticket           = new SupportTicket();
-        $ticket->user_id  = auth()->id() ?? 0;
-        $ticket->name     = $request->firstname . $request->lastname;
-        $ticket->email    = $request->email;
+        $ticket = new SupportTicket();
+        $ticket->user_id = auth()->id() ?? 0;
+        $ticket->name = $request->firstname . $request->lastname;
+        $ticket->email = $request->email;
         $ticket->priority = Status::PRIORITY_MEDIUM;
 
 
-        $ticket->ticket     = $random;
-        $ticket->subject    = $request->subject;
+        $ticket->ticket = $random;
+        $ticket->subject = $request->subject;
         $ticket->last_reply = Carbon::now();
-        $ticket->status     = Status::TICKET_OPEN;
+        $ticket->status = Status::TICKET_OPEN;
         $ticket->save();
 
-        $adminNotification            = new AdminNotification();
-        $adminNotification->user_id   = auth()->user() ? auth()->user()->id : 0;
-        $adminNotification->title     = 'A new contact message has been submitted';
+        $adminNotification = new AdminNotification();
+        $adminNotification->user_id = auth()->user() ? auth()->user()->id : 0;
+        $adminNotification->title = 'A new contact message has been submitted';
         $adminNotification->click_url = urlPath('admin.ticket.view', $ticket->id);
         $adminNotification->save();
 
-        $message                    = new SupportMessage();
+        $message = new SupportMessage();
         $message->support_ticket_id = $ticket->id;
-        $message->message           = $request->message;
+        $message->message = $request->message;
         $message->save();
 
         $notify[] = ['success', 'Ticket created successfully'];
@@ -99,7 +99,7 @@ class SiteController extends Controller
             return apiResponse('validation_error', 'error', $validator->errors()->all());
         }
 
-        $subscribe        = new Subscriber();
+        $subscribe = new Subscriber();
         $subscribe->email = $request->email;
         $subscribe->save();
 
@@ -109,44 +109,45 @@ class SiteController extends Controller
     public function changeLanguage($lang = null)
     {
         $language = Language::where('code', $lang)->first();
-        if (!$language) $lang = 'en';
+        if (!$language)
+            $lang = 'en';
         session()->put('lang', $lang);
 
         return back();
     }
     public function blogs()
     {
-        $pageTitle   = 'Blogs';
-        $blogs       = Frontend::where('data_keys', 'blog.element')->latest('id')->paginate(getPaginate(18));
-        $sections    = Page::where('tempname', activeTemplate())->where('slug', 'blog')->first();
-        $seoContents = $sections->seo_content;
-        $seoImage    = @$seoContents->image ? frontendImage('blog', $seoContents->image, getFileSize('seo'), true) : null;
+        $pageTitle = 'Blogs';
+        $blogs = Frontend::where('data_keys', 'blog.element')->latest('id')->paginate(getPaginate(18));
+        $sections = Page::where('tempname', activeTemplate())->where('slug', 'blog')->first();
+        $seoContents = $sections?->seo_content;
+        $seoImage = @$seoContents->image ? frontendImage('blog', $seoContents->image, getFileSize('seo'), true) : null;
         return view('Template::blogs', compact('pageTitle', 'blogs', 'sections', 'seoContents', 'seoImage'));
     }
 
     public function pages($slug)
     {
-        $page        = Page::where('tempname', activeTemplate())->where('slug', $slug)->firstOrFail();
-        $pageTitle   = $page->name;
-        $sections    = $page->secs;
+        $page = Page::where('tempname', activeTemplate())->where('slug', $slug)->firstOrFail();
+        $pageTitle = $page->name;
+        $sections = $page->secs;
         $seoContents = $page->seo_content;
-        $seoImage    = @$seoContents->image ? getImage(getFilePath('seo') . '/' . @$seoContents->image, getFileSize('seo')) : null;
+        $seoImage = @$seoContents->image ? getImage(getFilePath('seo') . '/' . @$seoContents->image, getFileSize('seo')) : null;
         return view('Template::pages', compact('pageTitle', 'sections', 'seoContents', 'seoImage'));
     }
 
     public function blogDetails($slug)
     {
-        $blog        = Frontend::where('slug', $slug)->where('data_keys', 'blog.element')->firstOrFail();
+        $blog = Frontend::where('slug', $slug)->where('data_keys', 'blog.element')->firstOrFail();
         $latestBlogs = Frontend::where('slug', '!=', $slug)->where('data_keys', 'blog.element')->take(10)->latest('id')->get();
-        $pageTitle   = strLimit($blog->data_values->title);
+        $pageTitle = strLimit($blog->data_values->title);
         $seoContents = $blog->seo_content;
         if ($seoContents) {
             $seoImage = frontendImage('blog', $seoContents->image, getFileSize('seo'), true);
         } else {
             $seoContents = (object) [
-                'title'              => $blog->data_values->title,
-                'social_title'       => $blog->data_values->title,
-                'description'        => strLimit(strip_tags(@$blog->data_values->description), 300),
+                'title' => $blog->data_values->title,
+                'social_title' => $blog->data_values->title,
+                'description' => strLimit(strip_tags(@$blog->data_values->description), 300),
                 'social_description' => strLimit(strip_tags(@$blog->data_values->description), 300),
             ];
             $seoImage = frontendImage('blog', @$blog->data_values->image);
@@ -160,36 +161,40 @@ class SiteController extends Controller
         $cookieContent = Frontend::where('data_keys', 'cookie.data')->first();
         abort_if($cookieContent->data_values->status != Status::ENABLE, 404);
         $pageTitle = 'Cookie Policy';
-        $cookie    = Frontend::where('data_keys', 'cookie.data')->first();
+        $cookie = Frontend::where('data_keys', 'cookie.data')->first();
         return view('Template::cookie', compact('pageTitle', 'cookie'));
     }
 
 
     public function policyPages($slug)
     {
-        $policy      = Frontend::where('slug', $slug)->where('data_keys', 'policy_pages.element')->firstOrFail();
-        $pageTitle   = $policy->data_values->title;
+        $policy = Frontend::where('slug', $slug)->where('data_keys', 'policy_pages.element')->firstOrFail();
+        $pageTitle = $policy->data_values->title;
         $seoContents = $policy->seo_content;
-        $seoImage    = @$seoContents->image ? frontendImage('policy_pages', $seoContents->image, getFileSize('seo'), true) : null;
+        $seoImage = @$seoContents->image ? frontendImage('policy_pages', $seoContents->image, getFileSize('seo'), true) : null;
         return view('Template::policy', compact('policy', 'pageTitle', 'seoContents', 'seoImage'));
     }
 
 
     public function placeholderImage($size = null)
     {
-        $imgWidth  = (int) (explode('x', $size)[0] ?? 100);
+        $imgWidth = (int) (explode('x', $size)[0] ?? 100);
         $imgHeight = (int) (explode('x', $size)[1] ?? 100);
-        if ($imgWidth < 1)  $imgWidth  = 100;
-        if ($imgHeight < 1) $imgHeight = 100;
+        if ($imgWidth < 1)
+            $imgWidth = 100;
+        if ($imgHeight < 1)
+            $imgHeight = 100;
 
-        $text     = $imgWidth . '×' . $imgHeight;
+        $text = $imgWidth . '×' . $imgHeight;
         $fontSize = round(($imgWidth - 50) / 8);
-        if ($fontSize <= 9)                          $fontSize = 9;
-        if ($imgHeight < 100 && $fontSize > 30)      $fontSize = 30;
+        if ($fontSize <= 9)
+            $fontSize = 9;
+        if ($imgHeight < 100 && $fontSize > 30)
+            $fontSize = 30;
 
-        $image     = imagecreatetruecolor($imgWidth, $imgHeight);
+        $image = imagecreatetruecolor($imgWidth, $imgHeight);
         $colorFill = imagecolorallocate($image, 100, 100, 100);
-        $bgFill    = imagecolorallocate($image, 220, 220, 220);
+        $bgFill = imagecolorallocate($image, 220, 220, 220);
         imagefill($image, 0, 0, $bgFill);
 
         // Resolve font path relative to the project root (one level above core/)
@@ -198,19 +203,19 @@ class SiteController extends Controller
         header('Content-Type: image/jpeg');
 
         if ($fontFile && file_exists($fontFile)) {
-            $textBox    = imagettfbbox($fontSize, 0, $fontFile, $text);
-            $textWidth  = abs($textBox[4] - $textBox[0]);
+            $textBox = imagettfbbox($fontSize, 0, $fontFile, $text);
+            $textWidth = abs($textBox[4] - $textBox[0]);
             $textHeight = abs($textBox[5] - $textBox[1]);
-            $textX      = ($imgWidth - $textWidth) / 2;
-            $textY      = ($imgHeight + $textHeight) / 2;
-            imagettftext($image, $fontSize, 0, (int)$textX, (int)$textY, $colorFill, $fontFile, $text);
+            $textX = ($imgWidth - $textWidth) / 2;
+            $textY = ($imgHeight + $textHeight) / 2;
+            imagettftext($image, $fontSize, 0, (int) $textX, (int) $textY, $colorFill, $fontFile, $text);
         } else {
             // Fallback: built-in GD font — no external file required
             $builtinSize = ($fontSize >= 16) ? 4 : (($fontSize >= 12) ? 3 : 2);
-            $charW  = imagefontwidth($builtinSize);
-            $charH  = imagefontheight($builtinSize);
-            $textX  = (int)(($imgWidth  - $charW  * strlen($text)) / 2);
-            $textY  = (int)(($imgHeight - $charH) / 2);
+            $charW = imagefontwidth($builtinSize);
+            $charH = imagefontheight($builtinSize);
+            $textX = (int) (($imgWidth - $charW * strlen($text)) / 2);
+            $textY = (int) (($imgHeight - $charH) / 2);
             imagestring($image, $builtinSize, $textX, $textY, $text, $colorFill);
         }
 
@@ -236,10 +241,10 @@ class SiteController extends Controller
 
     public function pusherAuthentication($socketId, $channelName)
     {
-        $general      = gs();
+        $general = gs();
         $pusherSecret = $general->pusher_config->app_secret;
-        $str          = $socketId . ":" . $channelName;
-        $hash         = hash_hmac('sha256', $str, $pusherSecret);
+        $str = $socketId . ":" . $channelName;
+        $hash = hash_hmac('sha256', $str, $pusherSecret);
 
         return response()->json([
             'auth' => $general->pusher_config->app_key . ":" . $hash,

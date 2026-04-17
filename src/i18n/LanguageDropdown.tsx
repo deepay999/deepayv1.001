@@ -5,8 +5,14 @@ import { setLanguage } from './i18n';
 import type { Lang } from './index';
 
 const LANGUAGES: Array<{ code: Lang; flag: string; name: string }> = [
-  { code: 'zh', flag: '🇨🇳', name: '中文' },
+  { code: 'it', flag: '🇮🇹', name: 'Italiano' },
   { code: 'en', flag: '🇬🇧', name: 'English' },
+  { code: 'fr', flag: '🇫🇷', name: 'Français' },
+  { code: 'de', flag: '🇩🇪', name: 'Deutsch' },
+  { code: 'es', flag: '🇪🇸', name: 'Español' },
+  { code: 'pt', flag: '🇵🇹', name: 'Português' },
+  { code: 'ar', flag: '🇸🇦', name: 'العربية' },
+  { code: 'zh', flag: '🇨🇳', name: '中文' },
 ];
 
 /**
@@ -55,7 +61,7 @@ export function LanguageDropdown() {
       {open && (
         <div
           role="listbox"
-          className="absolute right-0 mt-1 w-36 rounded-xl border border-white/10 bg-[#111]/95 backdrop-blur-xl shadow-xl z-50 overflow-hidden"
+          className="absolute right-0 mt-1 w-40 max-h-64 overflow-y-auto rounded-xl border border-white/10 bg-[#111]/95 backdrop-blur-xl shadow-xl z-50"
         >
           {LANGUAGES.map((lang) => (
             <button

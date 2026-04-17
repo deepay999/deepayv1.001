@@ -6,14 +6,12 @@ import { changeLanguage, type Lang, SUPPORTED } from '../../i18n';
 
 /** Compact flag SVGs indexed by language code. */
 const FLAGS: Record<Lang, JSX.Element> = {
-  zh: (
-    /* China — red field with large yellow star + four small stars */
+  it: (
+    /* Italy — vertical tricolour */
     <svg width="20" height="14" viewBox="0 0 20 14" fill="none" aria-hidden="true">
-      <rect width="20" height="14" rx="1" fill="#DE2910" />
-      <polygon points="4,2 5,4.8 8,4.8 5.6,6.5 6.5,9.3 4,7.5 1.5,9.3 2.4,6.5 0,4.8 3,4.8" fill="#FFDE00" />
-      <polygon points="8,1.5 8.6,3 10.1,3 8.9,3.8 9.4,5.3 8,4.5 6.6,5.3 7.1,3.8 5.9,3 7.4,3" fill="#FFDE00" />
-      <polygon points="10,3.5 10.6,5 12.1,5 10.9,5.8 11.4,7.3 10,6.5 8.6,7.3 9.1,5.8 7.9,5 9.4,5" fill="#FFDE00" />
-      <polygon points="8,6.5 8.6,8 10.1,8 8.9,8.8 9.4,10.3 8,9.5 6.6,10.3 7.1,8.8 5.9,8 7.4,8" fill="#FFDE00" />
+      <rect width="20" height="14" rx="1" fill="#CE2B37" />
+      <rect width="13.3" height="14" fill="#fff" />
+      <rect width="6.6" height="14" fill="#009246" />
     </svg>
   ),
   en: (
@@ -24,6 +22,53 @@ const FLAGS: Record<Lang, JSX.Element> = {
       <path d="M0 0L20 14M20 0L0 14" stroke="#C8102E" strokeWidth="1.6" />
       <path d="M10 0V14M0 7H20" stroke="white" strokeWidth="5" />
       <path d="M10 0V14M0 7H20" stroke="#C8102E" strokeWidth="3" />
+    </svg>
+  ),
+  fr: (
+    /* France — vertical tricolour */
+    <svg width="20" height="14" viewBox="0 0 20 14" fill="none" aria-hidden="true">
+      <rect width="20" height="14" rx="1" fill="#ED2939" />
+      <rect width="13.3" height="14" fill="#fff" />
+      <rect width="6.6" height="14" fill="#002395" />
+    </svg>
+  ),
+  de: (
+    /* Germany — horizontal tricolour */
+    <svg width="20" height="14" viewBox="0 0 20 14" fill="none" aria-hidden="true">
+      <rect width="20" height="14" rx="1" fill="#FFCE00" />
+      <rect width="20" height="9.3" fill="#DD0000" />
+      <rect width="20" height="4.6" fill="#000" />
+    </svg>
+  ),
+  es: (
+    /* Spain — horizontal tricolour */
+    <svg width="20" height="14" viewBox="0 0 20 14" fill="none" aria-hidden="true">
+      <rect width="20" height="14" rx="1" fill="#c60b1e" />
+      <rect y="3.5" width="20" height="7" fill="#ffc400" />
+    </svg>
+  ),
+  pt: (
+    /* Portugal — vertical bicolour */
+    <svg width="20" height="14" viewBox="0 0 20 14" fill="none" aria-hidden="true">
+      <rect width="20" height="14" rx="1" fill="#FF0000" />
+      <rect width="8" height="14" fill="#006600" />
+    </svg>
+  ),
+  ar: (
+    /* Arab League — green with white crescent */
+    <svg width="20" height="14" viewBox="0 0 20 14" fill="none" aria-hidden="true">
+      <rect width="20" height="14" rx="1" fill="#007A3D" />
+      <text x="10" y="10" textAnchor="middle" fontSize="9" fill="white">🌙</text>
+    </svg>
+  ),
+  zh: (
+    /* China — red field with large yellow star + four small stars */
+    <svg width="20" height="14" viewBox="0 0 20 14" fill="none" aria-hidden="true">
+      <rect width="20" height="14" rx="1" fill="#DE2910" />
+      <polygon points="4,2 5,4.8 8,4.8 5.6,6.5 6.5,9.3 4,7.5 1.5,9.3 2.4,6.5 0,4.8 3,4.8" fill="#FFDE00" />
+      <polygon points="8,1.5 8.6,3 10.1,3 8.9,3.8 9.4,5.3 8,4.5 6.6,5.3 7.1,3.8 5.9,3 7.4,3" fill="#FFDE00" />
+      <polygon points="10,3.5 10.6,5 12.1,5 10.9,5.8 11.4,7.3 10,6.5 8.6,7.3 9.1,5.8 7.9,5 9.4,5" fill="#FFDE00" />
+      <polygon points="8,6.5 8.6,8 10.1,8 8.9,8.8 9.4,10.3 8,9.5 6.6,10.3 7.1,8.8 5.9,8 7.4,8" fill="#FFDE00" />
     </svg>
   ),
 };
@@ -98,8 +143,8 @@ export function LanguageDropdown({ theme = 'dark' }: LanguageDropdownProps) {
                       ? 'bg-white/8 text-white'
                       : 'text-white/70 hover:bg-white/5 hover:text-white'
                     : active
-                    ? 'bg-neutral-100 text-neutral-900'
-                    : 'text-neutral-600 hover:bg-neutral-50 hover:text-neutral-900',
+                      ? 'bg-neutral-100 text-neutral-900'
+                      : 'text-neutral-600 hover:bg-neutral-50 hover:text-neutral-900',
                 ].join(' ')}
               >
                 <FlagIcon lang={lang} />

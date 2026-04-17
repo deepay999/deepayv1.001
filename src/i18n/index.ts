@@ -1,8 +1,9 @@
 /**
  * i18next configuration.
  *
- * - Default language: zh (Chinese Simplified)
- * - Secondary language: en (English)
+ * - Default language: it (Italian — DeePay S.r.l. is an Italian platform)
+ * - Supported: it, en, fr, de, es, pt, ar, zh
+ * - Auto-detects browser language on first visit
  * - Translations are loaded from GET /api/language/{key}; on failure the
  *   embedded fallback bundles are used instead.
  * - User's language choice is persisted in localStorage under "language".
@@ -11,15 +12,24 @@ import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import zh from './locales/zh';
 import en from './locales/en';
+import it from './locales/it';
+import fr from './locales/fr';
+import de from './locales/de';
+import es from './locales/es';
+import pt from './locales/pt';
+import ar from './locales/ar';
 
 const STORAGE_KEY = 'language';
-const DEFAULT_LANG = 'zh';
-const SUPPORTED = ['zh', 'en'] as const;
+const DEFAULT_LANG = 'it';
+const SUPPORTED = ['it', 'en', 'fr', 'de', 'es', 'pt', 'ar', 'zh'] as const;
 type Lang = (typeof SUPPORTED)[number];
 
 function getSavedLang(): Lang {
   const saved = localStorage.getItem(STORAGE_KEY);
-  if (saved === 'zh' || saved === 'en') return saved;
+  if (SUPPORTED.includes(saved as Lang)) return saved as Lang;
+  // Auto-detect browser language on first visit
+  const browserLang = navigator.language.split('-')[0] as Lang;
+  if (SUPPORTED.includes(browserLang)) return browserLang;
   return DEFAULT_LANG;
 }
 
@@ -58,8 +68,14 @@ i18n.use(initReactI18next).init({
   lng: savedLang,
   fallbackLng: DEFAULT_LANG,
   resources: {
-    zh: { translation: zh },
+    it: { translation: it },
     en: { translation: en },
+    fr: { translation: fr },
+    de: { translation: de },
+    es: { translation: es },
+    pt: { translation: pt },
+    ar: { translation: ar },
+    zh: { translation: zh },
   },
   interpolation: {
     escapeValue: false,
