@@ -58,13 +58,13 @@ return Application::configure(basePath: dirname(__DIR__))
                     ->name('admin.')
                     ->group(base_path('routes/admin.php'));
 
-                Route::middleware(['web'])
+                Route::middleware(['web', 'maintenance'])
                     ->namespace('Merchant')
                     ->prefix('merchant')
                     ->name('merchant.')
                     ->group(base_path('routes/merchant.php'));
 
-                Route::middleware(['web'])
+                Route::middleware(['web', 'maintenance'])
                     ->namespace('Agent')
                     ->prefix('agent')
                     ->name('agent.')
@@ -77,8 +77,6 @@ return Application::configure(basePath: dirname(__DIR__))
                     ->group(base_path('routes/ipn.php'));
 
                 Route::middleware(['web', 'maintenance'])->prefix('user')->group(base_path('routes/user.php'));
-                Route::middleware(['web', 'maintenance'])->prefix('merchant')->group(base_path('routes/merchant.php'));
-                Route::middleware(['web', 'maintenance'])->prefix('agent')->group(base_path('routes/agent.php'));
                 Route::middleware(['web', 'maintenance'])->group(base_path('routes/web.php'));
             });
         }
