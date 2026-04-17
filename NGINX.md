@@ -115,9 +115,10 @@ cd core && composer install --no-dev --optimize-autoloader && cd ..
 
 # 3. Configure Laravel environment
 cp core/.env.example core/.env
-# Edit core/.env — set APP_URL, DB_*, MAIL_*, etc.
-php index.php artisan key:generate
-php index.php artisan migrate --force
+# Edit core/.env — set APP_URL=https://deepay.srl, DB_*, MAIL_*, etc.
+# IMPORTANT: APP_URL must be exactly https://deepay.srl (no trailing slash, no subdirectory)
+php core/artisan key:generate
+php core/artisan migrate --force
 
 # 4. Install Node dependencies and build React frontend
 npm install
@@ -253,6 +254,8 @@ curl -s https://deepay.srl/ | grep -c 'deepay-startup-shell'
 | **Garbled text (乱码)** | Nginx/PHP not sending `charset=utf-8` header | Add `charset utf-8; source_charset utf-8;` to the `server {}` block (see config above) |
 | **Uploaded images missing / broken** | `storage` symlink not created | Run `php index.php artisan storage:link` on the server; the `deploy.sh` now does this automatically |
 | **All images broken (wrong domain)** | `APP_URL` wrong in `.env` | Set `APP_URL=https://deepay.srl` (or `https://www.deepay.srl`) in `core/.env` |
+| **Images load with doubled `/assets/assets/` path** | `APP_URL` contains a path suffix (e.g. `https://deepay.srl/assets`) | Set `APP_URL=https://deepay.srl` — no trailing slash, no subdirectory |
+| **API routes `/api/dashboard/overview` and `/api/iban` return 404** | Stale route cache created before these routes were added | Run `php core/artisan route:clear && php core/artisan route:cache` on the server |
 
 ---
 

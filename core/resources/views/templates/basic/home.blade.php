@@ -12,7 +12,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#080808" />
   <link rel="manifest" href="{{ asset('manifest.json') }}" />
-  <link rel="icon" type="image/png" href="{{ asset('assets/images/logo_icon/favicon.png') }}" />
+  <link rel="icon" type="image/png" href="/assets/images/logo_icon/favicon.png" />
   <title>DeePay — Pagamenti aziendali per l'Italia e l'Europa</title>
   <meta name="description" content="DeePay è la piattaforma di pagamenti digitali per aziende italiane ed europee. Bonifici istantanei, carte aziendali e incassi in un'unica soluzione." />
   <meta property="og:title" content="DeePay — Pagamenti aziendali" />

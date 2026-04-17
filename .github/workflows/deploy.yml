@@ -121,10 +121,10 @@ jobs:
             done
 
             # Rebuild caches after all assets are in place
-            php index.php artisan storage:link --force 2>/dev/null || true
-            php index.php artisan config:cache  2>/dev/null || true
-            php index.php artisan route:cache   2>/dev/null || true
-            php index.php artisan view:cache    2>/dev/null || true
+            php "${{ secrets.DEPLOY_PATH }}/core/artisan" storage:link --force 2>/dev/null || true
+            php "${{ secrets.DEPLOY_PATH }}/core/artisan" config:cache  2>/dev/null || true
+            php "${{ secrets.DEPLOY_PATH }}/core/artisan" route:cache   2>/dev/null || true
+            php "${{ secrets.DEPLOY_PATH }}/core/artisan" view:cache    2>/dev/null || true
 
       # ── 7. Smoke tests ──────────────────────────────────────────────────────
       - name: Smoke-test — homepage returns 200 or 302
