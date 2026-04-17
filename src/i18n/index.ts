@@ -30,9 +30,21 @@ async function fetchBackendTranslations(
   try {
     const res = await fetch(`/api/language/${lang}`);
     if (!res.ok) return null;
-    const data: unknown = await res.json();
-    if (data && typeof data === 'object' && !Array.isArray(data)) {
-      return data as Record<string, string>;
+    const body: unknown = await res.json();
+    // The API wraps translations under { data: { file: { key: value, ... } } }
+    if (
+      body &&
+      typeof body === 'object' &&
+      !Array.isArray(body) &&
+      'data' in body
+    ) {
+      const data = (body as Record<string, unknown>).data;
+      if (data && typeof data === 'object' && !Array.isArray(data) && 'file' in data) {
+        const file = (data as Record<string, unknown>).file;
+        if (file && typeof file === 'object' && !Array.isArray(file)) {
+          return file as Record<string, string>;
+        }
+      }
     }
     return null;
   } catch {

@@ -145,7 +145,7 @@ function QRCanvas({ url, size = 200 }: { url: string; size?: number }) {
 
 /* ── main component ──────────────────────────────────────── */
 
-export function QRCodePage() {
+export function QRCodePage({ onBack }: { onBack?: () => void }) {
   const [amount, setAmount] = useState('0');
   const [showAmountPad, setShowAmountPad] = useState(false);
   const [copied, setCopied] = useState(false);
