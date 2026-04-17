@@ -19,7 +19,9 @@ DEPLOY_PATH="${DEPLOY_PATH:-/www/wwwroot/${SITE_DOMAIN}}"
 REPO_URL="${REPO_URL:-https://github.com/deepay999/deepayv1.001.git}"
 GIT_BRANCH="${GIT_BRANCH:-main}"
 PHP_VERSION="${PHP_VERSION:-8.4}"
-PHP_BIN="php${PHP_VERSION}"
+PHP_MAJOR_MINOR="${PHP_VERSION//./}"
+# PHP_BIN resolved after OS detection (aaPanel vs system)
+PHP_BIN=""
 COMPOSER_URL="https://getcomposer.org/installer"
 
 hr
@@ -32,14 +34,39 @@ hr
 # ── 1. Detect OS ──────────────────────────────────────────────────────────────
 if command -v apt-get &>/dev/null; then
   PKG_MGR="apt"
-elif command -v yum &>/dev/null; then
+elif command -v dnf &>/dev/null || command -v yum &>/dev/null; then
   PKG_MGR="yum"
 else
   warn "Unknown package manager — skipping automatic package installation."
   PKG_MGR="unknown"
 fi
+DNF_BIN="$(command -v dnf 2>/dev/null || echo yum)"
 
-# ── 2. Install system packages ────────────────────────────────────────────────
+# ── 2. Detect PHP binary (aaPanel / Remi / system) ───────────────────────────
+detect_php_bin() {
+  local candidates=(
+    "/www/server/php/${PHP_MAJOR_MINOR}/bin/php"
+    "/opt/remi/php${PHP_MAJOR_MINOR}/root/usr/bin/php"
+    "php${PHP_MAJOR_MINOR}"
+    "php${PHP_VERSION}"
+    "php"
+  )
+  for bin in "${candidates[@]}"; do
+    if command -v "$bin" &>/dev/null || [[ -x "$bin" ]]; then
+      local ver
+      ver=$("$bin" -r 'echo PHP_MAJOR_VERSION.".".PHP_MINOR_VERSION;' 2>/dev/null || echo "")
+      if [[ "$ver" == "$PHP_VERSION" ]]; then
+        echo "$bin"; return 0
+      fi
+    fi
+  done
+  for bin in "${candidates[@]}"; do
+    { command -v "$bin" &>/dev/null || [[ -x "$bin" ]]; } && { echo "$bin"; return 0; }
+  done
+  echo "php"
+}
+
+# ── 3. Install system packages ────────────────────────────────────────────────
 if [[ "$PKG_MGR" == "apt" ]]; then
   log "Updating package lists..."
   apt-get update -qq
@@ -59,11 +86,60 @@ if [[ "$PKG_MGR" == "apt" ]]; then
   done
 
 elif [[ "$PKG_MGR" == "yum" ]]; then
-  log "Installing required packages via yum..."
-  yum install -y "php${PHP_VERSION/./}-fpm" "php${PHP_VERSION/./}-gmp" \
-    "php${PHP_VERSION/./}-fileinfo" "php${PHP_VERSION/./}-mbstring" \
-    git curl unzip nginx 2>/dev/null || warn "Some packages failed — check manually."
+  AAPANEL_PHP="/www/server/php/${PHP_MAJOR_MINOR}/bin/php"
+
+  if [[ -x "$AAPANEL_PHP" ]]; then
+    ok "aaPanel PHP ${PHP_VERSION} detected: $AAPANEL_PHP — skipping yum PHP install."
+    PHP_BIN="$AAPANEL_PHP"
+  else
+    log "Detected RHEL/CentOS — installing PHP ${PHP_VERSION} via Remi repository..."
+
+    # EPEL
+    if ! rpm -q epel-release &>/dev/null; then
+      log "Installing EPEL..."
+      "$DNF_BIN" install -y epel-release 2>/dev/null || warn "EPEL install failed."
+    fi
+
+    # Remi repo
+    if ! rpm -q remi-release &>/dev/null; then
+      log "Installing Remi repository..."
+      OS_MAJOR=$(rpm -E '%{rhel}' 2>/dev/null || echo "9")
+      "$DNF_BIN" install -y "https://rpms.remirepo.net/enterprise/remi-release-${OS_MAJOR}.rpm" 2>/dev/null \
+        || warn "Could not install Remi repo — PHP packages may fail."
+    fi
+
+    # Remi PHP 8.x packages: php84-php-fpm, php84-php-gmp, etc.
+    PHP_PKG="php${PHP_MAJOR_MINOR}"
+    PHP_EXTS=(
+      "${PHP_PKG}-php" "${PHP_PKG}-php-fpm" "${PHP_PKG}-php-cli"
+      "${PHP_PKG}-php-mysqlnd" "${PHP_PKG}-php-mbstring" "${PHP_PKG}-php-xml"
+      "${PHP_PKG}-php-curl" "${PHP_PKG}-php-zip" "${PHP_PKG}-php-gd"
+      "${PHP_PKG}-php-intl" "${PHP_PKG}-php-bcmath" "${PHP_PKG}-php-gmp"
+      "${PHP_PKG}-php-opcache" "${PHP_PKG}-php-sodium"
+    )
+    "$DNF_BIN" install -y "${PHP_EXTS[@]}" 2>/dev/null \
+      && ok "PHP ${PHP_VERSION} (Remi) installed." \
+      || warn "Some PHP packages failed — ensure Remi repo is enabled."
+  fi
+
+  # Base tools
+  for pkg in git curl unzip; do
+    rpm -q "$pkg" &>/dev/null || "$DNF_BIN" install -y "$pkg" 2>/dev/null || warn "Could not install $pkg"
+  done
+
+  # nginx — use --disableexcludes in case it is filtered in yum.conf
+  if ! command -v nginx &>/dev/null; then
+    "$DNF_BIN" install -y nginx --disableexcludes=all 2>/dev/null \
+      || "$DNF_BIN" install -y nginx --skip-broken 2>/dev/null \
+      || warn "Could not install nginx — install it manually or via aaPanel."
+  else
+    ok "nginx already installed."
+  fi
 fi
+
+# ── Resolve PHP_BIN now that packages are installed ──────────────────────────
+[[ -z "$PHP_BIN" ]] && PHP_BIN="$(detect_php_bin)"
+ok "Using PHP binary: $PHP_BIN ($("$PHP_BIN" -r 'echo phpversion();' 2>/dev/null || echo 'unknown version'))"
 
 # ── 3. Install Composer ───────────────────────────────────────────────────────
 log "Checking Composer..."
@@ -95,13 +171,29 @@ cd "$DEPLOY_PATH"
 
 # ── 5. Configure PHP-FPM pool (fix open_basedir) ─────────────────────────────
 log "Configuring PHP-FPM pool for $SITE_DOMAIN..."
-POOL_CONF="/etc/php/${PHP_VERSION}/fpm/pool.d/${SITE_DOMAIN}.conf"
 
-# Detect socket path (aaPanel / BT Panel uses /tmp/php-cgi-XX.sock)
-PHP_MAJOR_MINOR="${PHP_VERSION//./}"
+# Detect pool.d directory — aaPanel stores pools under /www/server/php/XX/etc/php-fpm.d/
+POOL_DIR_CANDIDATES=(
+  "/www/server/php/${PHP_MAJOR_MINOR}/etc/php-fpm.d"   # aaPanel / BT Panel
+  "/etc/php/${PHP_VERSION}/fpm/pool.d"                  # Debian/Ubuntu
+  "/etc/php-fpm.d"                                      # RHEL/CentOS system
+  "/usr/local/etc/php-fpm.d"                            # Homebrew / custom
+)
+POOL_CONF_DIR=""
+for d in "${POOL_DIR_CANDIDATES[@]}"; do
+  if [[ -d "$d" ]]; then POOL_CONF_DIR="$d"; break; fi
+done
+if [[ -z "$POOL_CONF_DIR" ]]; then
+  warn "Could not find PHP-FPM pool.d directory — skipping pool config."
+else
+  POOL_CONF="${POOL_CONF_DIR}/${SITE_DOMAIN}.conf"
+fi
+
+# Socket path — aaPanel uses /tmp/php-cgi-XX.sock
 SOCK_PATH="/tmp/php-cgi-${PHP_MAJOR_MINOR}.sock"
 
-cat > "$POOL_CONF" <<EOF
+if [[ -n "$POOL_CONF_DIR" ]]; then
+  cat > "$POOL_CONF" <<EOF
 ; PHP-FPM pool for ${SITE_DOMAIN}
 ; Generated by deploy/setup.sh — DO NOT manually mix with other sites.
 [${SITE_DOMAIN}]
@@ -133,7 +225,10 @@ php_admin_value[post_max_size]     = 64M
 php_admin_value[upload_max_filesize] = 32M
 php_flag[expose_php]               = off
 EOF
-ok "PHP-FPM pool config written: $POOL_CONF"
+  ok "PHP-FPM pool config written: $POOL_CONF"
+else
+  warn "Skipped writing PHP-FPM pool config (pool.d directory not found)."
+fi
 
 # Create session directory
 SESSION_DIR="/www/php_session/${SITE_DOMAIN}"
@@ -141,8 +236,8 @@ mkdir -p "$SESSION_DIR"
 chown -R "$SITE_USER:$SITE_USER" "$SESSION_DIR" 2>/dev/null || true
 ok "Session directory: $SESSION_DIR"
 
-# Reload PHP-FPM
-for svc in "php${PHP_VERSION}-fpm" "php${PHP_MAJOR_MINOR}-fpm" "php-fpm"; do
+# Reload PHP-FPM — try aaPanel service names first, then standard names
+for svc in "php${PHP_MAJOR_MINOR}" "php${PHP_MAJOR_MINOR}-fpm" "php${PHP_VERSION}-fpm" "php-fpm83" "php-fpm84" "php-fpm"; do
   if systemctl is-active --quiet "$svc" 2>/dev/null; then
     systemctl reload "$svc" && ok "Reloaded $svc" && break
   elif systemctl is-enabled --quiet "$svc" 2>/dev/null; then
@@ -254,9 +349,9 @@ fi
 # ── 8. Composer install ───────────────────────────────────────────────────────
 log "Installing PHP dependencies..."
 cd "$CORE"
-if ! "$PHP_BIN" "$(which composer)" install --no-dev --optimize-autoloader --no-interaction 2>/dev/null; then
+if ! "$PHP_BIN" "$(command -v composer)" install --no-dev --optimize-autoloader --no-interaction 2>/dev/null; then
   warn "Composer failed with platform checks — retrying with --ignore-platform-reqs"
-  "$PHP_BIN" "$(which composer)" install --no-dev --optimize-autoloader --no-interaction \
+  "$PHP_BIN" "$(command -v composer)" install --no-dev --optimize-autoloader --no-interaction \
     --ignore-platform-reqs
 fi
 ok "Composer install complete."
