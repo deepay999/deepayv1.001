@@ -14,6 +14,9 @@ Route::namespace('Api')->name('api.agent.')->group(function () {
             Route::post('password/verify-code', 'verifyCode');
             Route::post('password/reset', 'reset');
         });
+
+        // Social / OAuth login (agent)
+        Route::post('oauth/{provider}', 'OAuthController');
     });
 
     Route::middleware(['auth:sanctum', 'token.permission:agent_token'])->group(function () {

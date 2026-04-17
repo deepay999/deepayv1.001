@@ -24,7 +24,13 @@ Route::namespace('Auth')->group(function () {
     });
 });
 
-Route::middleware('admin')->group(function () {
+// Admin 2FA verify (requires admin login but NOT the 2FA check itself)
+Route::middleware('admin')->controller('AdminTwoFactorController')->group(function () {
+    Route::get('twofactor/verify', 'verifyForm')->name('2fa.verify');
+    Route::post('twofactor/verify', 'verify')->name('2fa.verify.post');
+});
+
+Route::middleware(['admin', 'admin.2fa'])->group(function () {
     // Users Management
     Route::controller('ManageUsersController')->name('users.')->prefix('users')->group(function () {
         Route::middleware('permission:view users,admin')->group(function () {
@@ -413,6 +419,11 @@ Route::middleware('admin')->group(function () {
         Route::get('merchant/notification/history', 'merchantNotificationHistory')->name('merchant.notification.history')->middleware('permission:view merchant notifications,admin');
     });
 
+    // Security Log Analysis
+    Route::get('report/security/logs', 'SecurityLogController@index')
+        ->name('report.security.logs')
+        ->middleware('permission:view login history,admin');
+
     // Support
     Route::controller('SupportTicketController')->prefix('ticket')->name('ticket.')->group(function () {
         Route::middleware('permission:view user tickets,admin')->group(function () {
@@ -454,6 +465,13 @@ Route::middleware('admin')->group(function () {
         Route::post('profile', 'profileUpdate')->name('profile.update');
         Route::get('password', 'password')->name('password');
         Route::post('password', 'passwordUpdate')->name('password.update');
+
+    // 2FA settings (setup / enable / disable)
+    Route::controller('AdminTwoFactorController')->group(function () {
+        Route::get('twofactor', 'show')->name('twofactor');
+        Route::post('twofactor/enable', 'enable')->name('twofactor.enable');
+        Route::post('twofactor/disable', 'disable')->name('twofactor.disable');
+    });
 
         //Notification
         Route::middleware('permission:view all notifications,admin')->group(function () {

@@ -56,6 +56,9 @@
     if (permission != 'denied' && firebaseConfig) {
 
         //Firebase
+        if (typeof firebase === 'undefined') {
+            console.warn('[DeePay] firebase.js not loaded — push notifications skipped.');
+        } else {
         firebase.initializeApp(firebaseConfig);
         const messaging = firebase.messaging();
 
@@ -102,6 +105,8 @@
                 }
 
             });
+
+        }
 
     }
 </script>

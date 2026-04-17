@@ -67,17 +67,27 @@ class ProcessController extends Controller
 
     public function ipn(Request $request)
     {
-        $deposit = Deposit::where('btc_wallet', $_POST['payment_request_id'])->orderBy('id', 'DESC')->first();
+        $paymentRequestId = $request->post('payment_request_id');
+        if (empty($paymentRequestId)) {
+            abort(400);
+        }
+
+        $deposit = Deposit::where('btc_wallet', $paymentRequestId)->orderBy('id', 'DESC')->first();
+        if (!$deposit || $deposit->status != Status::PAYMENT_INITIATE) {
+            return;
+        }
+
         $instaMojoAcc = json_decode($deposit->gatewayCurrency()->gateway_parameter);
         $deposit->detail = $request->all();
         $deposit->save();
-        $imData = $_POST;
-        $macSent = $imData['mac'];
+
+        $imData  = $request->post();
+        $macSent = $imData['mac'] ?? '';
         unset($imData['mac']);
         ksort($imData, SORT_STRING | SORT_FLAG_CASE);
         $mac = hash_hmac("sha1", implode("|", $imData), $instaMojoAcc->salt);
 
-        if ($macSent == $mac && $imData['status'] == "Credit" && $deposit->status == Status::PAYMENT_INITIATE) {
+        if (hash_equals($mac, $macSent) && ($imData['status'] ?? '') === "Credit") {
             PaymentController::userDataUpdate($deposit);
         }
     }
