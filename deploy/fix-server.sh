@@ -245,7 +245,7 @@ else
     nginx -t
 fi
 
-# ── 6. Verify fix ─────────────────────────────────────────────────────────────
+# ── 7. Verify fix ─────────────────────────────────────────────────────────────
 log "Verifying fix..."
 NEW_OBD=$(php -i 2>/dev/null | grep open_basedir | awk -F'=>' '{print $NF}' | xargs || echo "unknown")
 if echo "$NEW_OBD" | grep -q "modaui"; then
@@ -265,7 +265,7 @@ else
     ok "open_basedir is now: $NEW_OBD"
 fi
 
-# ── 7. Quick smoke test ────────────────────────────────────────────────────────
+# ── 8. Quick smoke test ────────────────────────────────────────────────────────
 log "Testing site accessibility..."
 HTTP_CODE=$(curl -sk -o /dev/null -w "%{http_code}" \
     --connect-timeout 5 --max-time 10 \

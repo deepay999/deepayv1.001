@@ -127,8 +127,8 @@ ok "Composer install complete."
 # ── 8. Database migrations ────────────────────────────────────────────────────
 if [[ "$SKIP_MIGRATE" == "false" ]]; then
   log "Running database migrations..."
-  cd "$DEPLOY_PATH"
-  "$PHP_BIN" index.php artisan migrate --force --no-interaction \
+  cd "$CORE_PATH"
+  "$PHP_BIN" artisan migrate --force --no-interaction \
     || fail "Migration failed."
   ok "Migrations complete."
 else
@@ -137,22 +137,22 @@ fi
 
 # ── 9. Storage symlink (required for uploaded images) ─────────────────────────
 log "Creating storage symlink..."
-cd "$DEPLOY_PATH"
-"$PHP_BIN" index.php artisan storage:link --force 2>/dev/null \
+cd "$CORE_PATH"
+"$PHP_BIN" artisan storage:link --force 2>/dev/null \
   && ok "Storage symlink created/verified." \
   || warn "storage:link failed — uploaded images may not display."
 
 # ── 10. Clear and rebuild caches ──────────────────────────────────────────────
 if [[ "$SKIP_CACHE" == "false" ]]; then
   log "Rebuilding caches..."
-  cd "$DEPLOY_PATH"
-  "$PHP_BIN" index.php artisan config:clear   2>/dev/null || warn "config:clear failed"
-  "$PHP_BIN" index.php artisan route:clear    2>/dev/null || warn "route:clear failed"
-  "$PHP_BIN" index.php artisan view:clear     2>/dev/null || warn "view:clear failed"
-  "$PHP_BIN" index.php artisan event:clear    2>/dev/null || warn "event:clear failed"
-  "$PHP_BIN" index.php artisan config:cache   2>/dev/null || warn "config:cache failed"
-  "$PHP_BIN" index.php artisan route:cache    2>/dev/null || warn "route:cache failed"
-  "$PHP_BIN" index.php artisan view:cache     2>/dev/null || warn "view:cache failed"
+  cd "$CORE_PATH"
+  "$PHP_BIN" artisan config:clear   2>/dev/null || warn "config:clear failed"
+  "$PHP_BIN" artisan route:clear    2>/dev/null || warn "route:clear failed"
+  "$PHP_BIN" artisan view:clear     2>/dev/null || warn "view:clear failed"
+  "$PHP_BIN" artisan event:clear    2>/dev/null || warn "event:clear failed"
+  "$PHP_BIN" artisan config:cache   2>/dev/null || warn "config:cache failed"
+  "$PHP_BIN" artisan route:cache    2>/dev/null || warn "route:cache failed"
+  "$PHP_BIN" artisan view:cache     2>/dev/null || warn "view:cache failed"
   ok "Cache rebuild complete."
 else
   warn "Skipping cache rebuild (--skip-cache)."
