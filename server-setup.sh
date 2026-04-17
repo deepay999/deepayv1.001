@@ -45,7 +45,7 @@ npm run build
 echo "✅ Build complete — dist/ generated"
 
 # ── 5. sudo rule for PHP-FPM reload (passwordless) ─────────
-SUDO_LINE="www-data ALL=(ALL) NOPASSWD: /bin/systemctl reload php8.2-fpm, /bin/systemctl reload php8.1-fpm"
+SUDO_LINE="www-data ALL=(ALL) NOPASSWD: /bin/systemctl reload php8.4-fpm, /bin/systemctl reload php8.3-fpm, /bin/systemctl reload php8.2-fpm, /bin/systemctl reload php8.1-fpm"
 if ! grep -qF "php-fpm" /etc/sudoers 2>/dev/null; then
   echo "$SUDO_LINE" >> /etc/sudoers
   echo "✅ Added passwordless sudo for PHP-FPM reload"

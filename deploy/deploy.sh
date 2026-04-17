@@ -160,7 +160,7 @@ fi
 
 # ── 11. Reload PHP-FPM ───────────────────────────────────────────────────────
 log "Reloading PHP-FPM..."
-for svc in php8.3-fpm php8.2-fpm php8.1-fpm php-fpm php83 php82; do
+for svc in php8.4-fpm php8.3-fpm php8.2-fpm php8.1-fpm php-fpm php84 php83 php82; do
   if systemctl is-active --quiet "$svc" 2>/dev/null; then
     sudo systemctl reload "$svc" && ok "Reloaded $svc." && break
   fi

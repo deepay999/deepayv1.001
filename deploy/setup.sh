@@ -18,7 +18,7 @@ SITE_DOMAIN="${SITE_DOMAIN:-www.deepay.srl}"
 DEPLOY_PATH="${DEPLOY_PATH:-/www/wwwroot/${SITE_DOMAIN}}"
 REPO_URL="${REPO_URL:-https://github.com/deepay999/deepayv1.001.git}"
 GIT_BRANCH="${GIT_BRANCH:-main}"
-PHP_VERSION="${PHP_VERSION:-8.3}"
+PHP_VERSION="${PHP_VERSION:-8.4}"
 PHP_BIN="php${PHP_VERSION}"
 COMPOSER_URL="https://getcomposer.org/installer"
 
