@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import {
   Building2, Copy, ChevronDown, Download, FileText,
   Search, Sparkles, TrendingUp, ArrowUpRight, ArrowDownLeft,
-  Repeat, Percent, Eye, EyeOff, X, Gift,
+  Percent, Eye, EyeOff, X, Gift,
 } from 'lucide-react';
 
 interface HomePageProps {
@@ -33,10 +33,9 @@ function CopyButton({ text }: { text: string }) {
 }
 
 const TRANSACTIONS = [
-  { id: 1, date: '08 Apr. 2026', title: 'Rendimento 4%', time: '02:13', amount: '+€0,01', icon: Percent, bg: '#1A1A1A', color: '#fff', positive: true },
-  { id: 2, date: '22 Mar. 2026', title: 'EUR → SOL', subtitle: '0,63 SOL', time: '05:22', amount: '€49', icon: Repeat, bg: '#3B82F6', color: '#fff', positive: false },
-  { id: 3, date: '21 Mar. 2026', title: 'Trasferimento a Marco', time: '14:35', amount: '-€120', icon: ArrowUpRight, bg: '#F3F3F3', color: '#333', positive: false },
-  { id: 4, date: '20 Mar. 2026', title: 'Pagamento ricevuto', time: '09:10', amount: '+€350', icon: ArrowDownLeft, bg: '#F3F3F3', color: '#333', positive: true },
+  { id: 1, date: '08 Apr. 2026', title: 'Platform Cashback 4%', time: '02:13', amount: '+€0.01', icon: Percent, bg: '#1A1A1A', color: '#fff', positive: true },
+  { id: 3, date: '21 Mar. 2026', title: 'Transfer to Marco',    time: '14:35', amount: '-€120',  icon: ArrowUpRight, bg: '#F3F3F3', color: '#333', positive: false },
+  { id: 4, date: '20 Mar. 2026', title: 'Payment received',     time: '09:10', amount: '+€350',  icon: ArrowDownLeft, bg: '#F3F3F3', color: '#333', positive: true },
 ];
 
 const IBAN = 'IT89 1774 8019 84IT 3931 6333 343';
@@ -229,7 +228,7 @@ export function HomePage({ onAddMoney, onTransfer, onOpenProfile }: HomePageProp
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-neutral-900 truncate">{tx.title}</p>
-                  <p className="text-xs text-neutral-400">{tx.time}{tx.subtitle ? ` · ${tx.subtitle}` : ''}</p>
+                  <p className="text-xs text-neutral-400">{tx.time}</p>
                 </div>
                 <span className={`text-sm font-semibold ${tx.positive ? 'text-emerald-600' : 'text-neutral-800'}`}>
                   {tx.amount}
