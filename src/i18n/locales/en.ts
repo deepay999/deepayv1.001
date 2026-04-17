@@ -98,6 +98,8 @@ const en: Record<string, string> = {
   'tab.home':     'Home',
   'tab.wallet':   'Wallet',
   'tab.transfer': 'Transfer',
+  'tab.cards':    'Cards',
+  'tab.wallets':  'Wallets',
   'tab.iban':     'IBAN',
   'tab.activity': 'Activity',
   'tab.points':   'Points',
