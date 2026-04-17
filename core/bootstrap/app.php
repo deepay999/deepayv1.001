@@ -58,18 +58,6 @@ return Application::configure(basePath: dirname(__DIR__))
                     ->name('admin.')
                     ->group(base_path('routes/admin.php'));
 
-                Route::middleware(['web'])
-                    ->namespace('Merchant')
-                    ->prefix('merchant')
-                    ->name('merchant.')
-                    ->group(base_path('routes/merchant.php'));
-
-                Route::middleware(['web'])
-                    ->namespace('Agent')
-                    ->prefix('agent')
-                    ->name('agent.')
-                    ->group(base_path('routes/agent.php'));
-
                 Route::middleware(['web', 'maintenance'])
                     ->namespace('Gateway')
                     ->prefix('ipn')
