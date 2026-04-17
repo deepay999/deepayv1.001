@@ -14,6 +14,9 @@ Route::namespace('Api')->group(function () {
             Route::post('password/verify-code', 'verifyCode');
             Route::post('password/reset', 'reset');
         });
+
+        // Social / OAuth login (merchant)
+        Route::post('oauth/{provider}', 'OAuthController');
     });
 
     Route::middleware(['auth:sanctum', 'token.permission:merchant_token'])->group(function () {

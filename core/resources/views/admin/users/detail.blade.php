@@ -136,7 +136,7 @@
                                             <i class="fas fa-credit-card"></i>
                                         </div>
                                         <div class="widget-card-content">
-                                            <p class="widget-title">@lang('Balance')</p>
+                                            <p class="widget-title">@lang('Available Balance')</p>
                                             <h6 class="widget-amount">
                                                 {{ gs('cur_sym') }}{{ showAmount($user->balance, currencyFormat: false) }}
                                                 <span class="currency">
@@ -150,6 +150,47 @@
                                     </span>
                                 </div>
                             </div>
+                            <div class="col-sm-6">
+                                <div class="widget-card widget--danger">
+                                    <div class="widget-card-left">
+                                        <div class="widget-icon">
+                                            <i class="fas fa-lock"></i>
+                                        </div>
+                                        <div class="widget-card-content">
+                                            <p class="widget-title">@lang('Frozen Balance')</p>
+                                            <h6 class="widget-amount">
+                                                {{ gs('cur_sym') }}{{ showAmount($user->frozen_balance ?? 0, currencyFormat: false) }}
+                                                <span class="currency">
+                                                    {{ __(gs('cur_text')) }}
+                                                </span>
+                                            </h6>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            @if (gs('loyalty_points'))
+                                <div class="col-sm-6">
+                                    <div class="widget-card widget--info">
+                                        <a href="{{ route('admin.loyalty.user.points', $user->id) }}"
+                                            class="widget-card-link"></a>
+                                        <div class="widget-card-left">
+                                            <div class="widget-icon">
+                                                <i class="las la-star"></i>
+                                            </div>
+                                            <div class="widget-card-content">
+                                                <p class="widget-title">@lang('Loyalty Points')</p>
+                                                <h6 class="widget-amount">
+                                                    {{ number_format($user->points ?? 0) }}
+                                                    <span class="currency">@lang('pts')</span>
+                                                </h6>
+                                            </div>
+                                        </div>
+                                        <span class="widget-card-arrow">
+                                            <i class="fas fa-chevron-right"></i>
+                                        </span>
+                                    </div>
+                                </div>
+                            @endif
                             <div class="col-sm-6">
                                 <div class="widget-card widget--success">
                                     <a href="{{ route('admin.deposit.list') }}?search={{ $user->username }}"
@@ -489,6 +530,74 @@
             </form>
         </x-admin.ui.modal.body>
     </x-admin.ui.modal>
+
+    <x-admin.ui.modal id="freezeBalanceModal">
+        <x-admin.ui.modal.header>
+            <div>
+                <h4 class="modal-title">@lang('Freeze Balance')</h4>
+                <small class="modal-subtitle">@lang('Move funds from available balance to frozen balance')</small>
+            </div>
+            <button type="button" class="btn-close close" data-bs-dismiss="modal" aria-label="Close">
+                <i class="las la-times"></i>
+            </button>
+        </x-admin.ui.modal.header>
+        <x-admin.ui.modal.body>
+            <form method="POST" action="{{ route('admin.users.freeze.balance', $user->id) }}">
+                @csrf
+                <div class="form-group">
+                    <label class="form-label">@lang('Amount to Freeze')</label>
+                    <div class="input-group input--group">
+                        <input type="number" step="any" min="0" name="amount" class="form-control"
+                            placeholder="@lang('Enter amount')" required>
+                        <div class="input-group-text">{{ __(gs('cur_text')) }}</div>
+                    </div>
+                    <small class="text-muted">@lang('Available: :sym:bal :cur', ['sym' => gs('cur_sym'), 'bal' => showAmount($user->balance, currencyFormat: false), 'cur' => gs('cur_text')])</small>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">@lang('Reason')</label>
+                    <textarea class="form-control" placeholder="@lang('Enter reason for freezing')" name="reason" rows="3"
+                        required></textarea>
+                </div>
+                <div class="form-group">
+                    <x-admin.ui.btn.modal />
+                </div>
+            </form>
+        </x-admin.ui.modal.body>
+    </x-admin.ui.modal>
+
+    <x-admin.ui.modal id="unfreezeBalanceModal">
+        <x-admin.ui.modal.header>
+            <div>
+                <h4 class="modal-title">@lang('Unfreeze Balance')</h4>
+                <small class="modal-subtitle">@lang('Move funds from frozen balance back to available balance')</small>
+            </div>
+            <button type="button" class="btn-close close" data-bs-dismiss="modal" aria-label="Close">
+                <i class="las la-times"></i>
+            </button>
+        </x-admin.ui.modal.header>
+        <x-admin.ui.modal.body>
+            <form method="POST" action="{{ route('admin.users.unfreeze.balance', $user->id) }}">
+                @csrf
+                <div class="form-group">
+                    <label class="form-label">@lang('Amount to Unfreeze')</label>
+                    <div class="input-group input--group">
+                        <input type="number" step="any" min="0" name="amount" class="form-control"
+                            placeholder="@lang('Enter amount')" required>
+                        <div class="input-group-text">{{ __(gs('cur_text')) }}</div>
+                    </div>
+                    <small class="text-muted">@lang('Frozen: :sym:bal :cur', ['sym' => gs('cur_sym'), 'bal' => showAmount($user->frozen_balance ?? 0, currencyFormat: false), 'cur' => gs('cur_text')])</small>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">@lang('Reason')</label>
+                    <textarea class="form-control" placeholder="@lang('Enter reason for unfreezing')" name="reason" rows="3"
+                        required></textarea>
+                </div>
+                <div class="form-group">
+                    <x-admin.ui.btn.modal />
+                </div>
+            </form>
+        </x-admin.ui.modal.body>
+    </x-admin.ui.modal>
 @endsection
 
 @push('breadcrumb-plugins')
@@ -500,7 +609,22 @@
             <button type="button" class="flex-fill btn  btn--danger balance-adjust" data-act="sub">
                 <i class="las la-minus-circle me-1"></i>@lang('Balance')
             </button>
+            <button type="button" class="flex-fill btn btn--warning" data-bs-toggle="modal"
+                data-bs-target="#freezeBalanceModal">
+                <i class="las la-lock me-1"></i>@lang('Freeze')
+            </button>
+            @if (($user->frozen_balance ?? 0) > 0)
+                <button type="button" class="flex-fill btn btn--info" data-bs-toggle="modal"
+                    data-bs-target="#unfreezeBalanceModal">
+                    <i class="las la-lock-open me-1"></i>@lang('Unfreeze')
+                </button>
+            @endif
         </x-permission_check>
+        @if (gs('loyalty_points'))
+            <a href="{{ route('admin.loyalty.user.points', $user->id) }}" class="flex-fill btn btn--secondary">
+                <i class="las la-star me-1"></i>@lang('Points')
+            </a>
+        @endif
         <x-permission_check permission="ban user">
             @if ($user->status == Status::USER_ACTIVE)
                 <button type="button" class="flex-fill btn  btn--warning" data-bs-toggle="modal"

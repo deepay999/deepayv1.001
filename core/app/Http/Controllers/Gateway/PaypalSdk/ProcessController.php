@@ -63,34 +63,41 @@ class ProcessController extends Controller
 
     public function ipn()
     {
-        $request = new OrdersCaptureRequest($_GET['token']);
-        $request->prefer('return=representation');
+        $token = request()->query('token', '');
+
+        if (empty($token)) {
+            abort(400, 'Missing token');
+        }
 
         try {
-            $deposit = Deposit::where('btc_wallet', $_GET['token'])->where('status', Status::PAYMENT_INITIATE)->firstOrFail();
-            $paypalAcc = json_decode($deposit->gatewayCurrency()->gateway_parameter);
-            $clientId = $paypalAcc->clientId;
-            $clientSecret = $paypalAcc->clientSecret;
-            $environment = new ProductionEnvironment($clientId, $clientSecret);
-            $client = new PayPalHttpClient($environment);
+            $deposit = Deposit::where('btc_wallet', $token)
+                ->where('status', Status::PAYMENT_INITIATE)
+                ->firstOrFail();
 
+            $paypalAcc    = json_decode($deposit->gatewayCurrency()->gateway_parameter);
+            $clientId     = $paypalAcc->clientId;
+            $clientSecret = $paypalAcc->clientSecret;
+            $environment  = new ProductionEnvironment($clientId, $clientSecret);
+            $client       = new PayPalHttpClient($environment);
+
+            $request = new OrdersCaptureRequest($token);
+            $request->prefer('return=representation');
             $response = $client->execute($request);
 
-            if (@$response->result->status == 'COMPLETED') {
+            if (isset($response->result->status) && $response->result->status === 'COMPLETED') {
                 $deposit->detail = json_decode(json_encode($response->result->payer));
                 $deposit->save();
-
                 PaymentController::userDataUpdate($deposit);
-
                 $notify[] = ['success', 'Payment captured successfully'];
                 return redirect($deposit->success_url)->withNotify($notify);
-            } else {
-
-                $notify[] = ['error', 'Payment captured failed'];
-                return redirect($deposit->failed_url)->withNotify($notify);
             }
+
+            $notify[] = ['error', 'Payment capture failed'];
+            return redirect($deposit->failed_url)->withNotify($notify);
+
         } catch (HttpException $ex) {
-            return redirect($deposit->failed_url);
+            $notify[] = ['error', 'Payment processing error'];
+            return redirect('/')->withNotify($notify);
         }
     }
 }

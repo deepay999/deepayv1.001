@@ -33,6 +33,8 @@ class User extends Authenticatable {
         'kyc_data'                    => 'object',
         'ver_code_send_at'            => 'datetime',
         'balance'                     => 'double',
+        'frozen_balance'              => 'double',
+        'points'                      => 'integer',
         'status'                      => 'integer',
         'kv'                          => 'integer',
         'ev'                          => 'integer',

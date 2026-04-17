@@ -361,6 +361,74 @@ class ManageUsersController extends Controller
         return back()->withNotify($notify);
     }
 
+    public function freezeBalance(Request $request, $id)
+    {
+        $request->validate([
+            'amount' => 'required|numeric|gt:0',
+            'reason' => 'required|string|max:255',
+        ]);
+
+        $user   = User::findOrFail($id);
+        $amount = $request->amount;
+
+        if ($amount > $user->balance) {
+            $notify[] = ['error', $user->username . ' doesn\'t have sufficient available balance to freeze.'];
+            return back()->withNotify($notify);
+        }
+
+        $user->balance         -= $amount;
+        $user->frozen_balance  += $amount;
+        $user->save();
+
+        $transaction               = new Transaction();
+        $transaction->user_id      = $user->id;
+        $transaction->amount       = $amount;
+        $transaction->post_balance = $user->balance;
+        $transaction->charge       = 0;
+        $transaction->trx_type     = '-';
+        $transaction->details      = 'Balance frozen: ' . $request->reason;
+        $transaction->trx          = getTrx();
+        $transaction->remark       = 'balance_freeze';
+        $transaction->save();
+
+        $notify[] = ['success', showAmount($amount, currencyFormat: false) . ' ' . gs('cur_text') . ' frozen from ' . $user->username . '\'s balance'];
+        return back()->withNotify($notify);
+    }
+
+    public function unfreezeBalance(Request $request, $id)
+    {
+        $request->validate([
+            'amount' => 'required|numeric|gt:0',
+            'reason' => 'required|string|max:255',
+        ]);
+
+        $user   = User::findOrFail($id);
+        $amount = $request->amount;
+
+        if ($amount > $user->frozen_balance) {
+            $notify[] = ['error', $user->username . ' doesn\'t have sufficient frozen balance to unfreeze.'];
+            return back()->withNotify($notify);
+        }
+
+        $user->frozen_balance  -= $amount;
+        $user->balance         += $amount;
+        $user->save();
+
+        $transaction               = new Transaction();
+        $transaction->user_id      = $user->id;
+        $transaction->amount       = $amount;
+        $transaction->post_balance = $user->balance;
+        $transaction->charge       = 0;
+        $transaction->trx_type     = '+';
+        $transaction->details      = 'Balance unfrozen: ' . $request->reason;
+        $transaction->trx          = getTrx();
+        $transaction->remark       = 'balance_unfreeze';
+        $transaction->save();
+
+        $notify[] = ['success', showAmount($amount, currencyFormat: false) . ' ' . gs('cur_text') . ' unfrozen to ' . $user->username . '\'s balance'];
+        return back()->withNotify($notify);
+    }
+
     public function login($id)
     {
         Auth::loginUsingId($id);

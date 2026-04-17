@@ -581,6 +581,17 @@
             </li>
         @endif
 
+        @if (moduleIsEnable('loyalty_points', $enableModules))
+            <li class="sidebar-menu-list__item {{ menuActive('user.loyalty.points') }}">
+                <a href="{{ route('user.loyalty.points') }}" class="sidebar-menu-list__link">
+                    <span class="icon">
+                        <i class="las la-star"></i>
+                    </span>
+                    <span class="text">@lang('Loyalty Points')</span>
+                </a>
+            </li>
+        @endif
+
         <li class="sidebar-menu-list__item">
             <a href="{{ route('user.logout') }}" class="sidebar-menu-list__link log-out mt-2">
                 <span class="icon">
