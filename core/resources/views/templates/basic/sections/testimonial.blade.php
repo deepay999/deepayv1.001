@@ -63,6 +63,10 @@
     <script>
         "use strict";
         (function($) {
+            if (typeof $.fn.slick === 'undefined') {
+                console.warn('[DeePay] slick plugin not loaded — testimonial slider skipped.');
+                return;
+            }
             $('.testimonial-slider').slick({
                 slidesToScroll: 1,
                 autoplay: false,

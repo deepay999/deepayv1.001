@@ -15,6 +15,9 @@ use Illuminate\Support\Facades\Route;
 
 Route::namespace('Api')->name('api.')->group(function () {
 
+    // Public webhook — no authentication required
+    Route::post('webhooks/airwallex', 'DeepayController@airwallexWebhook');
+
     Route::controller('AppController')->group(function () {
         Route::withoutMiddleware('maintenance')->group(function () {
             Route::get('general-setting', 'generalSetting');
@@ -38,6 +41,9 @@ Route::namespace('Api')->name('api.')->group(function () {
             Route::post('password/verify-code', 'verifyCode');
             Route::post('password/reset', 'reset');
         });
+
+        // Social / OAuth login (user) — client sends provider access token, receives Sanctum token
+        Route::post('oauth/{provider}', 'OAuthController');
     });
 
     Route::middleware('auth:sanctum', 'token.permission:user_token')->group(function () {
@@ -62,6 +68,19 @@ Route::namespace('Api')->name('api.')->group(function () {
             Route::get('kyc-form', 'kycForm');
             Route::post('kyc-submit', 'kycSubmit');
         });
+
+        // ── Deblock-style endpoints (registered first to take priority over legacy routes) ──
+        Route::controller('DeepayController')->group(function () {
+            Route::get('dashboard/overview', 'overview');
+            Route::get('wallets', 'wallets');
+            Route::post('transfer', 'transfer');
+            Route::get('iban', 'iban');
+            Route::get('iban/transactions', 'ibanTransactions');
+            Route::post('payments/create', 'createPayment');
+            Route::post('withdraw', 'withdraw');
+            Route::get('transactions', 'transactions');
+        });
+        // ────────────────────────────────────────────────────────────────
 
         Route::middleware(['mobile.verify', 'registration.complete', 'check.status'])->group(function () {
 
@@ -90,6 +109,10 @@ Route::namespace('Api')->name('api.')->group(function () {
 
                 //Report
                 Route::any('add-money/history', 'addMoneyHistory')->middleware('kyc');
+                // NOTE: GET transactions is intentionally handled by DeepayController above
+                // (registered earlier, bypasses check.status for the PWA frontend).
+                // This registration is kept for the legacy web/mobile-app clients that rely
+                // on the richer paginated format with `check.status` enforcement.
                 Route::get('transactions', 'transactions');
 
                 Route::get('push-notifications', 'pushNotifications');
@@ -264,6 +287,12 @@ Route::namespace('Api')->name('api.')->group(function () {
                 Route::get('{id}', 'show');
             });
 
+            // Points
+            Route::controller('PointController')->prefix('points')->group(function () {
+                Route::get('/', 'index');
+                Route::post('reward', 'reward');
+            });
+
             //Investment
             Route::prefix('investment')->name('investment.')->middleware(['module:investment'])->controller('InvestmentController')->group(function () {
                 Route::get('plan', 'all')->name('all');
@@ -274,7 +303,18 @@ Route::namespace('Api')->name('api.')->group(function () {
             });
         });
 
+        // ── Ledger-based Wallets ──────────────────────────────────────────
+        Route::controller('WalletController')->prefix('wallets')->group(function () {
+            Route::get('/',        'index');   // all wallet balances (EUR/USD/GBP + points)
+            Route::get('/ledger',  'ledger');  // paginated ledger history
+        });
+
         Route::get('logout', 'Auth\LoginController@logout');
         Route::post('add-device-token', 'UserController@addDeviceToken');
     });
+});
+
+// ── Public webhook endpoints (no auth middleware) ──────────────────────────
+Route::namespace('Api')->group(function () {
+    Route::post('webhooks/airwallex', 'AirwallexWebhookController@handle');
 });

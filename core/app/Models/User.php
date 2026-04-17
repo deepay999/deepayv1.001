@@ -33,6 +33,8 @@ class User extends Authenticatable {
         'kyc_data'                    => 'object',
         'ver_code_send_at'            => 'datetime',
         'balance'                     => 'double',
+        'frozen_balance'              => 'double',
+        'points'                      => 'integer',
         'status'                      => 'integer',
         'kv'                          => 'integer',
         'ev'                          => 'integer',
@@ -44,6 +46,7 @@ class User extends Authenticatable {
         'profile_complete'            => 'integer',
         'ts'                          => 'integer',
         'tv'                          => 'integer',
+        'wallet_frozen'               => 'boolean',
     ];
 
     protected $appends = ['image_src'];
@@ -77,6 +80,18 @@ class User extends Authenticatable {
 
     public function qrCode() {
         return $this->hasOne(QrCode::class, 'user_id');
+    }
+
+    public function wallets() {
+        return $this->hasMany(Wallet::class);
+    }
+
+    public function ledgerEntries() {
+        return $this->hasMany(LedgerEntry::class);
+    }
+
+    public function rewardPoints() {
+        return $this->hasMany(RewardPoint::class);
     }
 
     public function loginLogs() {

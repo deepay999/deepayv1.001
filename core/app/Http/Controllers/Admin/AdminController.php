@@ -12,6 +12,7 @@ use App\Models\CashOut;
 use App\Models\Deposit;
 use App\Models\EducationFee;
 use App\Models\MakePayment;
+use App\Models\Merchant;
 use App\Models\Microfinance;
 use App\Models\SendMoney;
 use App\Models\Transaction;
@@ -34,7 +35,7 @@ class AdminController extends Controller
         // 
         $userQuery     = User::query();
         $agentQuery    = Agent::query();
-        $merchantQuery = Agent::query();
+        $merchantQuery = Merchant::query();
         $depositQuery  = Deposit::query();
         $withdrawQuery = Withdrawal::query();
         $trxQuery      = Transaction::query();

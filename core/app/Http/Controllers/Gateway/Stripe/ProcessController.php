@@ -43,9 +43,9 @@ class ProcessController extends Controller
             'cardCVC'    => 'required',
         ]);
         $cc        = $request->cardNumber;
-        $exp       = $request->cardExpiry;
+        $expRaw    = $request->cardExpiry;
         $cvc       = $request->cardCVC;
-        $exp       = explode("/", $_POST['cardExpiry']);
+        $exp       = explode("/", $expRaw);
 
         if (!@$exp[1]) {
             $notify[] = ['error', 'Invalid expiry date provided'];

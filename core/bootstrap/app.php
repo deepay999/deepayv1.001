@@ -2,6 +2,7 @@
 
 use App\Http\Exception\ExceptionHandler;
 use App\Http\Middleware\Authenticate;
+use App\Http\Middleware\AdminForce2FA;
 use App\Http\Middleware\CheckStatus;
 use App\Http\Middleware\KycMiddleware;
 use App\Http\Middleware\MaintenanceMode;
@@ -57,13 +58,13 @@ return Application::configure(basePath: dirname(__DIR__))
                     ->name('admin.')
                     ->group(base_path('routes/admin.php'));
 
-                Route::middleware(['web'])
+                Route::middleware(['web', 'maintenance'])
                     ->namespace('Merchant')
                     ->prefix('merchant')
                     ->name('merchant.')
                     ->group(base_path('routes/merchant.php'));
 
-                Route::middleware(['web'])
+                Route::middleware(['web', 'maintenance'])
                     ->namespace('Agent')
                     ->prefix('agent')
                     ->name('agent.')
@@ -76,8 +77,6 @@ return Application::configure(basePath: dirname(__DIR__))
                     ->group(base_path('routes/ipn.php'));
 
                 Route::middleware(['web', 'maintenance'])->prefix('user')->group(base_path('routes/user.php'));
-                Route::middleware(['web', 'maintenance'])->prefix('merchant')->group(base_path('routes/merchant.php'));
-                Route::middleware(['web', 'maintenance'])->prefix('agent')->group(base_path('routes/agent.php'));
                 Route::middleware(['web', 'maintenance'])->group(base_path('routes/web.php'));
             });
         }
@@ -96,6 +95,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'admin'       => RedirectIfNotAdmin::class,
             'admin.guest' => RedirectIfAdmin::class,
+            'admin.2fa'   => AdminForce2FA::class,
 
             'agent'       => RedirectIfNotAgent::class,
             'agent.guest' => RedirectIfAgent::class,
@@ -124,7 +124,7 @@ return Application::configure(basePath: dirname(__DIR__))
         );
     })
     ->withExceptions(function (Exceptions $exceptions) {
-        $exceptions->render(function (Exception $e, Request $request) {
+        $exceptions->render(function (\Throwable $e, Request $request) {
 
             //for handle custom 
             if (str_starts_with($e->getMessage(), "custom_not_found_exception") || isApiRequest()) {

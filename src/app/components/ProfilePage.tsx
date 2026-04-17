@@ -1,5 +1,6 @@
 import { motion } from 'motion/react';
 import { ArrowLeft, Headphones, Settings, Copy, Lock, CircleDollarSign, MessageCircle, Share2, Info, ChevronRight, Globe } from 'lucide-react';
+import { LanguageDropdown } from './LanguageDropdown';
 
 interface ProfilePageProps {
   onBack: () => void;
@@ -24,6 +25,7 @@ export function ProfilePage({ onBack, onViewWebsite }: ProfilePageProps) {
           <ArrowLeft className="w-5 h-5" strokeWidth={2.5} />
         </motion.button>
         <div className="flex items-center gap-3">
+          <LanguageDropdown theme="light" />
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}

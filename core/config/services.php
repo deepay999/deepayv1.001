@@ -35,4 +35,18 @@ return [
         ],
     ],
 
+    'airwallex' => [
+        'api_key'        => env('AIRWALLEX_API_KEY'),
+        'client_id'      => env('AIRWALLEX_CLIENT_ID'),
+        'webhook_secret' => env('AIRWALLEX_WEBHOOK_SECRET'),
+        'base_url'       => env('AIRWALLEX_BASE_URL', 'https://api.airwallex.com'),
+    ],
+
+    'swan' => [
+        'client_id'     => env('SWAN_CLIENT_ID'),
+        'client_secret' => env('SWAN_CLIENT_SECRET'),
+        'sandbox'       => env('SWAN_SANDBOX', true),
+        'base_url'      => env('SWAN_BASE_URL', 'https://api.swan.io'),
+    ],
+
 ];

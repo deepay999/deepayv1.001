@@ -48,11 +48,20 @@ class ProcessController extends Controller
 
     }
 
-    public function ipn(){
-        $tokenId = $_GET['token-id'];
+    public function ipn()
+    {
+        $tokenId = request()->query('token-id');
+
+        if (empty($tokenId)) {
+            abort(400, 'Missing token-id');
+        }
 
         $track = Session::get('Track');
         $deposit = Deposit::where('trx', $track)->orderBy('id', 'DESC')->first();
+
+        if (!$deposit) {
+            abort(404);
+        }
 
         $credentials = json_decode($deposit->gatewayCurrency()->gateway_parameter);
 

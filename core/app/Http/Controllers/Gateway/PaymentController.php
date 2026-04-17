@@ -11,6 +11,7 @@ use App\Models\Deposit;
 use App\Models\GatewayCurrency;
 use App\Models\Transaction;
 use App\Models\User;
+use App\Models\UserPoint;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -204,6 +205,14 @@ class PaymentController extends Controller
                     'trx' => $deposit->trx,
                     'post_balance' => showAmount($user->balance)
                 ]);
+
+                // Award loyalty points for deposit if enabled
+                if (gs('loyalty_points') && gs('points_per_currency') > 0) {
+                    $pts = (int) floor($deposit->amount * gs('points_per_currency'));
+                    if ($pts > 0) {
+                        UserPoint::earn($user->id, $pts, 'Earned ' . $pts . ' pts for adding ' . showAmount($deposit->amount, currencyFormat: false) . ' ' . gs('cur_text'), $deposit->trx, 'deposit');
+                    }
+                }
             }
         } elseif ($deposit->agent_id != 0) {
 

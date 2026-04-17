@@ -37,35 +37,48 @@ class ProcessController extends Controller
 
     public function ipn(Request $request)
     {
+        $orderId  = $request->post('order_id', '');
+        $status   = $request->post('status');
+        $currency = $request->post('currency', '');
 
-    	$gateway = GatewayCurrency::where('gateway_alias','Cashmaal')->where('currency',$request->currency)->first();
-        $IPN_key=json_decode($gateway->gateway_parameter)->ipn_key;
-        $web_id=json_decode($gateway->gateway_parameter)->web_id;
-
-
-        $deposit = Deposit::where('trx', $_POST['order_id'])->orderBy('id', 'DESC')->first();
-        if ($request->ipn_key != $IPN_key && $web_id != $request->web_id) {
-        	$notify[] = ['error','Data invalid'];
-        	return redirect($deposit->failed_url)->withNotify($notify);
+        if (empty($orderId)) {
+            abort(400);
         }
 
-        if ($request->status == 2) {
-        	$notify[] = ['info','Payment in pending'];
-        	return redirect($deposit->failed_url)->withNotify($notify);
+        $gateway = GatewayCurrency::where('gateway_alias', 'Cashmaal')
+            ->where('currency', $currency)
+            ->first();
+
+        if (!$gateway) {
+            abort(404);
         }
 
-        if ($request->status != 1) {
-        	$notify[] = ['error','Data invalid'];
-        	return redirect($deposit->failed_url)->withNotify($notify);
+        $params  = json_decode($gateway->gateway_parameter);
+        $ipnKey  = $params->ipn_key;
+        $webId   = $params->web_id;
+
+        $deposit = Deposit::where('trx', $orderId)->orderBy('id', 'DESC')->first();
+        if (!$deposit || $deposit->status != Status::PAYMENT_INITIATE) {
+            abort(404);
         }
 
-		if($_POST['status'] == 1 && $deposit->status == Status::PAYMENT_INITIATE && $_POST['currency'] == $deposit->method_currency ){
-			PaymentController::userDataUpdate($deposit);
-            $notify[] = ['success', 'Transaction is successful'];
-		}else{
-			$notify[] = ['error','Payment failed'];
-        	return redirect($deposit->failed_url)->withNotify($notify);
-		}
-		return redirect($deposit->success_url)->withNotify($notify);
+        if ($request->post('ipn_key') !== $ipnKey || $request->post('web_id') != $webId) {
+            $notify[] = ['error', 'Data invalid'];
+            return redirect($deposit->failed_url)->withNotify($notify);
+        }
+
+        if ((int)$status === 2) {
+            $notify[] = ['info', 'Payment pending'];
+            return redirect($deposit->failed_url)->withNotify($notify);
+        }
+
+        if ((int)$status !== 1 || $currency !== $deposit->method_currency) {
+            $notify[] = ['error', 'Payment failed'];
+            return redirect($deposit->failed_url)->withNotify($notify);
+        }
+
+        PaymentController::userDataUpdate($deposit);
+        $notify[] = ['success', 'Transaction is successful'];
+        return redirect($deposit->success_url)->withNotify($notify);
     }
 }

@@ -99,4 +99,21 @@ class Status
     const INVEST_REPEAT   = 1;
 
     const LIFETIME   = -1;
+
+    // ── Ledger entry types ─────────────────────────────────────────────────
+    const LEDGER_CREDIT = 'credit';
+    const LEDGER_DEBIT  = 'debit';
+
+    // ── Wallet states ──────────────────────────────────────────────────────
+    const WALLET_ACTIVE = 1;
+    const WALLET_FROZEN = 0;
+
+    // ── Reward point types ─────────────────────────────────────────────────
+    const POINT_EARNED  = 'earned';
+    const POINT_SPENT   = 'spent';
+    const POINT_EXPIRED = 'expired';
+
+    // ── User types ─────────────────────────────────────────────────────────
+    const USER_TYPE_PERSONAL = 'personal';
+    const USER_TYPE_BUSINESS = 'business';
 }
