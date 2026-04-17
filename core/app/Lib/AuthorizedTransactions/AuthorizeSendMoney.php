@@ -6,6 +6,8 @@ use App\Constants\Status;
 use App\Models\SendMoney;
 use App\Models\Transaction;
 use App\Models\User;
+use App\Services\LedgerService;
+use App\Services\RiskControlService;
 
 class AuthorizeSendMoney
 {
@@ -24,6 +26,18 @@ class AuthorizeSendMoney
         if (@$userAction->details->total_amount > $sendUser->balance) {
             $notify[] = 'Sorry! Insufficient balance';
             return apiResponse("insufficient_balance", "error", $notify);
+        }
+
+        // ── Risk checks ────────────────────────────────────────────────────
+        $ledger     = app(LedgerService::class);
+        $riskCtrl   = app(RiskControlService::class);
+        $currency   = gs('currency_code') ?? 'EUR';
+
+        try {
+            $riskCtrl->checkWalletNotFrozen($sendUser->id);
+            $riskCtrl->checkDailyLimit($sendUser->id, $currency, $details->total_amount);
+        } catch (\RuntimeException $e) {
+            return apiResponse("risk_control_error", "error", [$e->getMessage()]);
         }
 
         $userAction->is_used = Status::YES;
@@ -73,6 +87,31 @@ class AuthorizeSendMoney
         $sendMoney->receiver_details        = 'Received Money From ' . $sendUser->fullname;
         $sendMoney->trx                     = $senderTrx->trx;
         $sendMoney->save();
+
+        // ── Double ledger entries (immutable audit trail) ──────────────────
+        try {
+            $ledger->transfer(
+                senderId:      $sendUser->id,
+                receiverId:    $receivedUser->id,
+                currency:      $currency,
+                amount:        $amount,
+                type:          'p2p_transfer',
+                referenceType: 'send_money',
+                referenceId:   $sendMoney->id,
+                description:   "P2P transfer — {$senderTrx->trx}",
+                idempotencyKey: 'p2p_' . $senderTrx->trx
+            );
+
+            // Evaluate risk signals after each outbound transfer
+            $riskCtrl->evaluateRisk($sendUser->id, $currency);
+        } catch (\Throwable $e) {
+            // Ledger write failure is non-fatal to the existing balance update,
+            // but must be alerted for reconciliation.
+            \Log::error('LedgerService: failed to write P2P ledger entries', [
+                'trx'   => $senderTrx->trx,
+                'error' => $e->getMessage(),
+            ]);
+        }
 
         notify($receivedUser, 'RECEIVED_MONEY', [
             'to_user'   => $receivedUser->fullname,

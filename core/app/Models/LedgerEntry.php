@@ -1,49 +1,42 @@
 <?php
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-/**
- * LedgerEntry — immutable double-entry bookkeeping record.
- *
- * ❗ NEVER call update() or delete() on this model.
- *    MySQL triggers also block UPDATE/DELETE at DB level.
- *    Only WalletService::post() should create entries.
- */
-class LedgerEntry extends Model
-{
-    public    $timestamps = false;
-    protected $table      = 'ledger_entries';
+class LedgerEntry extends Model {
 
     protected $fillable = [
-        'user_id','type','amount','currency',
-        'balance_after','reference_id','description',
+        'user_id',
+        'currency',
+        'amount',
+        'type',
+        'reference_type',
+        'reference_id',
+        'description',
+        'idempotency_key',
+        'running_balance',
     ];
 
     protected $casts = [
-        'amount'       => 'decimal:2',
-        'balance_after'=> 'decimal:2',
-        'created_at'   => 'datetime',
+        'amount'          => 'double',
+        'running_balance' => 'double',
     ];
 
-    // ── Guard against accidental mutation ─────────────────────
-    public function save(array $options = []): bool
-    {
-        if (!$this->exists) {
-            return parent::save($options);
-        }
-        throw new \LogicException('LedgerEntry is immutable — save() after creation is forbidden.');
+    // Ledger is immutable – disallow updates
+    public static function boot(): void {
+        parent::boot();
+
+        static::updating(function () {
+            throw new \RuntimeException('Ledger entries are immutable and cannot be updated.');
+        });
+
+        static::deleting(function () {
+            throw new \RuntimeException('Ledger entries are immutable and cannot be deleted.');
+        });
     }
 
-    public function delete(): bool|null
-    {
-        throw new \LogicException('LedgerEntry is immutable — delete() is forbidden.');
-    }
-
-    // ── Relationships ──────────────────────────────────────────
-    public function user(): BelongsTo
-    {
+    public function user() {
         return $this->belongsTo(User::class);
     }
 }

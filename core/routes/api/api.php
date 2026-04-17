@@ -286,6 +286,12 @@ Route::namespace('Api')->name('api.')->group(function () {
             });
         });
 
+        // ── Ledger-based Wallets ──────────────────────────────────────────
+        Route::controller('WalletController')->prefix('wallets')->group(function () {
+            Route::get('/',        'index');   // all wallet balances (EUR/USD/GBP + points)
+            Route::get('/ledger',  'ledger');  // paginated ledger history
+        });
+
         Route::get('logout', 'Auth\LoginController@logout');
         Route::post('add-device-token', 'UserController@addDeviceToken');
 
@@ -302,4 +308,9 @@ Route::namespace('Api')->name('api.')->group(function () {
         });
         // ────────────────────────────────────────────────────────────────
     });
+});
+
+// ── Public webhook endpoints (no auth middleware) ──────────────────────────
+Route::namespace('Api')->group(function () {
+    Route::post('webhooks/airwallex', 'AirwallexWebhookController@handle');
 });
