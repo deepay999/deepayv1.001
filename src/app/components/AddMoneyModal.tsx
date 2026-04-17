@@ -1,6 +1,7 @@
 import { motion, AnimatePresence } from 'motion/react';
 import { X, CreditCard, Building2, Smartphone, Check } from 'lucide-react';
 import { useState } from 'react';
+import { api } from '../services/api';
 
 interface AddMoneyModalProps {
   isOpen: boolean;
@@ -10,7 +11,8 @@ interface AddMoneyModalProps {
 export function AddMoneyModal({ isOpen, onClose }: AddMoneyModalProps) {
   const [amount, setAmount] = useState('');
   const [method, setMethod] = useState<'card' | 'bank' | 'apple' | null>(null);
-  const [step, setStep] = useState<'input' | 'processing' | 'success'>('input');
+  const [step, setStep] = useState<'input' | 'processing' | 'success' | 'error'>('input');
+  const [paymentLink, setPaymentLink] = useState('');
 
   const methods = [
     { id: 'card' as const, name: 'Debit Card', icon: CreditCard, subtitle: 'Instant' },
@@ -23,17 +25,36 @@ export function AddMoneyModal({ isOpen, onClose }: AddMoneyModalProps) {
     { last4: '5412', brand: 'Mastercard', expiry: '09/27' }
   ];
 
-  const handleAddMoney = () => {
+  const reset = () => {
+    onClose();
+    setStep('input');
+    setAmount('');
+    setMethod(null);
+    setPaymentLink('');
+  };
+
+  const handleAddMoney = async () => {
+    if (!amount || !method) return;
     setStep('processing');
-    setTimeout(() => {
-      setStep('success');
-      setTimeout(() => {
-        onClose();
-        setStep('input');
-        setAmount('');
-        setMethod(null);
-      }, 2000);
-    }, 1500);
+    try {
+      if (method === 'bank') {
+        // Bank transfer: show IBAN instructions — no API call needed
+        setStep('success');
+      } else {
+        // Card / Apple Pay: create a hosted payment request via the API
+        const res = await api.createPayment({
+          amount: parseFloat(amount),
+          currency: 'EUR',
+        });
+        if (res.payment_link) {
+          setPaymentLink(res.payment_link);
+        }
+        setStep('success');
+      }
+    } catch (err) {
+      console.error('[AddMoneyModal] createPayment failed:', err);
+      setStep('error');
+    }
   };
 
   return (
@@ -85,16 +106,55 @@ export function AddMoneyModal({ isOpen, onClose }: AddMoneyModalProps) {
                   transition={{ delay: 0.2 }}
                   className="text-2xl font-bold mb-2"
                 >
-                  Money Added!
+                  {method === 'bank' ? 'Details Ready!' : 'Request Created!'}
                 </motion.h2>
                 <motion.p
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ delay: 0.3 }}
-                  className="text-muted-foreground text-center"
+                  className="text-muted-foreground text-center mb-4"
                 >
-                  €{amount} has been added to your account
+                  {method === 'bank'
+                    ? `Transfer €${amount} to your IBAN from your bank to top up your account.`
+                    : `Your payment request for €${amount} has been created.`}
                 </motion.p>
+                {paymentLink && (
+                  <motion.a
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.4 }}
+                    href={paymentLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-5 py-2.5 rounded-full bg-neutral-900 text-white text-sm font-semibold hover:bg-neutral-800 transition-colors"
+                  >
+                    Open payment page
+                  </motion.a>
+                )}
+                <motion.button
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.5 }}
+                  onClick={reset}
+                  className="mt-3 text-sm text-muted-foreground underline"
+                >
+                  Close
+                </motion.button>
+              </div>
+            ) : step === 'error' ? (
+              <div className="p-8 flex flex-col items-center justify-center h-full min-h-[400px]">
+                <div className="w-20 h-20 rounded-full bg-red-100 flex items-center justify-center mb-6">
+                  <span className="text-4xl">⚠️</span>
+                </div>
+                <h2 className="text-xl font-bold mb-2">Payment Failed</h2>
+                <p className="text-muted-foreground text-center mb-8">Something went wrong. Please try again.</p>
+                <motion.button
+                  whileTap={{ scale: 0.97 }}
+                  onClick={() => setStep('input')}
+                  className="px-6 py-3 rounded-2xl bg-neutral-900 text-white text-sm font-semibold"
+                >
+                  Try Again
+                </motion.button>
               </div>
             ) : (
               <>

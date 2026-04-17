@@ -2,7 +2,7 @@ import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import { resources } from './fallback';
 
-const STORAGE_KEY = 'deepay_lang';
+const STORAGE_KEY = 'language';
 
 function getInitialLanguage(): string {
   try {

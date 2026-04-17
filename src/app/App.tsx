@@ -36,7 +36,7 @@ export default function App() {
     if (showProfile) return <ProfilePage onBack={() => setShowProfile(false)} onViewWebsite={() => {}} />;
     switch (activeTab) {
       case 'home':     return <HomePage onAddMoney={() => setAddMoneyModal(true)} onTransfer={() => setActiveTab('transfer')} onOpenProfile={() => setShowProfile(true)} />;
-      case 'wallet':   return <WalletsPage />;
+      case 'wallet':   return <WalletsPage onAddMoney={() => setAddMoneyModal(true)} onTransfer={() => setActiveTab('transfer')} />;
       case 'transfer': return <TransferPage />;
       case 'iban':     return <IBANPage />;
       case 'activity': return <ActivityPage />;

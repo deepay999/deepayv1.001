@@ -4,6 +4,7 @@ import {
   Wallet, ArrowUpRight, ArrowDownLeft, Repeat,
   TrendingUp, RefreshCw, ChevronRight, Filter,
 } from 'lucide-react';
+import { auth } from '../services/api';
 
 /* ── Types ────────────────────────────────────────────────── */
 interface WalletBalance {
@@ -27,6 +28,8 @@ interface LedgerEntry {
 interface WalletsPageProps {
   /** When true, the Transfer quick-action is pre-highlighted */
   showTransferTab?: boolean;
+  onAddMoney?: () => void;
+  onTransfer?: () => void;
 }
 
 /* ── Currency config ──────────────────────────────────────── */
@@ -75,7 +78,7 @@ const MOCK_LEDGER: LedgerEntry[] = [
 ];
 
 /* ── Component ────────────────────────────────────────────── */
-export function WalletsPage({ showTransferTab = false }: WalletsPageProps) {
+export function WalletsPage({ showTransferTab = false, onAddMoney, onTransfer }: WalletsPageProps) {
   const [wallets,         setWallets]         = useState<WalletBalance[]>(MOCK_WALLETS);
   const [ledger,          setLedger]          = useState<LedgerEntry[]>(MOCK_LEDGER);
   const [activeCurrency,  setActiveCurrency]  = useState<string>('EUR');
@@ -85,7 +88,7 @@ export function WalletsPage({ showTransferTab = false }: WalletsPageProps) {
 
   /* Fetch from API when a token is available */
   useEffect(() => {
-    const token = localStorage.getItem('api_token');
+    const token = auth.getToken();
     if (!token) return;
 
     setLoading(true);
@@ -187,17 +190,21 @@ export function WalletsPage({ showTransferTab = false }: WalletsPageProps) {
 
               {/* Action buttons */}
               <div className="flex gap-2 mt-4">
-                {['Add money', 'Transfer', 'Withdraw'].map(action => (
+                {[
+                  { label: 'Add money', action: onAddMoney },
+                  { label: 'Transfer',  action: onTransfer },
+                ].map(({ label, action }) => (
                   <motion.button
-                    key={action}
+                    key={label}
                     whileTap={{ scale: 0.95 }}
+                    onClick={action}
                     className={`flex-1 py-2 rounded-xl text-xs font-semibold transition-all ${
-                      action === 'Transfer' && showTransferTab
+                      label === 'Transfer' && showTransferTab
                         ? 'bg-neutral-900 text-white shadow'
                         : 'bg-white text-neutral-700 border border-neutral-200'
                     }`}
                   >
-                    {action}
+                    {label}
                   </motion.button>
                 ))}
               </div>
