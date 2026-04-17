@@ -161,6 +161,15 @@ if [[ -d "$DEPLOY_PATH/.git" ]]; then
   cd "$DEPLOY_PATH"
   git fetch origin "$GIT_BRANCH"
   git reset --hard "origin/${GIT_BRANCH}"
+elif [[ -d "$DEPLOY_PATH" ]]; then
+  # Directory exists but is NOT a git repo (e.g. aaPanel created it empty or with placeholder files)
+  log "Directory exists but is not a git repo — initialising in-place..."
+  cd "$DEPLOY_PATH"
+  git init
+  git remote add origin "$REPO_URL"
+  git fetch origin "$GIT_BRANCH" --depth=1
+  git reset --hard "origin/${GIT_BRANCH}"
+  ok "Repository initialised from existing directory."
 else
   log "Cloning repository..."
   git clone --branch "$GIT_BRANCH" "$REPO_URL" "$DEPLOY_PATH" \
