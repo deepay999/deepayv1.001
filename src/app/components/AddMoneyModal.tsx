@@ -1,6 +1,7 @@
 import { motion, AnimatePresence } from 'motion/react';
-import { X, CreditCard, Building2, Smartphone, Check } from 'lucide-react';
+import { X, CreditCard, Building2, Smartphone, Check, AlertCircle, ExternalLink } from 'lucide-react';
 import { useState } from 'react';
+import { api } from '../services/api';
 
 interface AddMoneyModalProps {
   isOpen: boolean;
@@ -10,7 +11,9 @@ interface AddMoneyModalProps {
 export function AddMoneyModal({ isOpen, onClose }: AddMoneyModalProps) {
   const [amount, setAmount] = useState('');
   const [method, setMethod] = useState<'card' | 'bank' | 'apple' | null>(null);
-  const [step, setStep] = useState<'input' | 'processing' | 'success'>('input');
+  const [step, setStep] = useState<'input' | 'processing' | 'success' | 'error'>('input');
+  const [paymentLink, setPaymentLink] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const methods = [
     { id: 'card' as const, name: 'Debit Card', icon: CreditCard, subtitle: 'Instant' },
@@ -23,17 +26,33 @@ export function AddMoneyModal({ isOpen, onClose }: AddMoneyModalProps) {
     { last4: '5412', brand: 'Mastercard', expiry: '09/27' }
   ];
 
-  const handleAddMoney = () => {
+  const handleAddMoney = async () => {
+    if (!amount || !method) return;
     setStep('processing');
-    setTimeout(() => {
+    setPaymentLink(null);
+    setErrorMessage(null);
+    try {
+      const res = await api.createPayment({
+        amount: parseFloat(amount),
+        currency: 'EUR',
+      });
+      setPaymentLink(res.payment_link ?? null);
       setStep('success');
-      setTimeout(() => {
-        onClose();
-        setStep('input');
-        setAmount('');
-        setMethod(null);
-      }, 2000);
-    }, 1500);
+    } catch (err: unknown) {
+      const message =
+        err instanceof Error ? err.message : 'An unexpected error occurred. Please try again.';
+      setErrorMessage(message);
+      setStep('error');
+    }
+  };
+
+  const handleClose = () => {
+    onClose();
+    setStep('input');
+    setAmount('');
+    setMethod(null);
+    setPaymentLink(null);
+    setErrorMessage(null);
   };
 
   return (
@@ -45,7 +64,7 @@ export function AddMoneyModal({ isOpen, onClose }: AddMoneyModalProps) {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            onClick={onClose}
+            onClick={handleClose}
             className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40"
           >
             {/* Expanding rings */}
@@ -85,16 +104,75 @@ export function AddMoneyModal({ isOpen, onClose }: AddMoneyModalProps) {
                   transition={{ delay: 0.2 }}
                   className="text-2xl font-bold mb-2"
                 >
-                  Money Added!
+                  Payment Initiated!
                 </motion.h2>
                 <motion.p
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ delay: 0.3 }}
-                  className="text-muted-foreground text-center"
+                  className="text-muted-foreground text-center mb-4"
                 >
-                  €{amount} has been added to your account
+                  Your payment request for €{amount} has been created.
                 </motion.p>
+                {paymentLink && (
+                  <motion.a
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.4 }}
+                    href={paymentLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 px-5 py-3 rounded-2xl bg-primary text-primary-foreground text-sm font-semibold mb-4"
+                  >
+                    Complete Payment <ExternalLink className="w-4 h-4" />
+                  </motion.a>
+                )}
+                <motion.button
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.5 }}
+                  onClick={handleClose}
+                  className="text-sm text-muted-foreground underline"
+                >
+                  Close
+                </motion.button>
+              </div>
+            ) : step === 'error' ? (
+              <div className="p-8 flex flex-col items-center justify-center h-full min-h-[400px]">
+                <motion.div
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ type: 'spring', duration: 0.6 }}
+                  className="w-20 h-20 rounded-full bg-red-100 flex items-center justify-center mb-6"
+                >
+                  <AlertCircle className="w-10 h-10 text-red-500" strokeWidth={2} />
+                </motion.div>
+                <motion.h2
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.2 }}
+                  className="text-2xl font-bold mb-2"
+                >
+                  Payment Failed
+                </motion.h2>
+                <motion.p
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.3 }}
+                  className="text-muted-foreground text-center mb-6"
+                >
+                  {errorMessage ?? 'Something went wrong. Please try again.'}
+                </motion.p>
+                <motion.button
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.4 }}
+                  whileTap={{ scale: 0.97 }}
+                  onClick={() => setStep('input')}
+                  className="px-6 py-3 rounded-2xl bg-neutral-900 text-white text-sm font-semibold"
+                >
+                  Try Again
+                </motion.button>
               </div>
             ) : (
               <>
@@ -104,7 +182,7 @@ export function AddMoneyModal({ isOpen, onClose }: AddMoneyModalProps) {
                   <motion.button
                     whileHover={{ rotate: 90 }}
                     whileTap={{ scale: 0.9 }}
-                    onClick={onClose}
+                    onClick={handleClose}
                     className="w-8 h-8 rounded-full hover:bg-accent flex items-center justify-center transition-colors"
                   >
                     <X className="w-5 h-5" />
