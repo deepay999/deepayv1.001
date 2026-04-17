@@ -15,9 +15,6 @@ const SHELL_CACHE = `${CACHE_VERSION}-shell`;
 
 /** Assets that form the app-shell — cached eagerly on install */
 const PRECACHE_URLS = [
-  '/assets/images/logo_icon/favicon.png',
-  '/assets/images/logo_icon/logo.png',
-  '/assets/images/logo_icon/logo_dark.png',
   '/assets/global/css/bootstrap.min.css',
   '/assets/global/css/all.min.css',
   '/assets/global/css/line-awesome.min.css',

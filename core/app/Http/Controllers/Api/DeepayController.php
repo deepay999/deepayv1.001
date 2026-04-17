@@ -53,16 +53,19 @@ class DeepayController extends Controller
         return response()->json([
             [
                 'currency'  => 'EUR',
+                'total'     => $eurBalance,
                 'available' => $eurBalance,
                 'frozen'    => 0.00,
             ],
             [
                 'currency'  => 'USD',
+                'total'     => 0.00,
                 'available' => 0.00,
                 'frozen'    => 0.00,
             ],
             [
                 'currency'  => 'GBP',
+                'total'     => 0.00,
                 'available' => 0.00,
                 'frozen'    => 0.00,
             ],
@@ -194,7 +197,7 @@ class DeepayController extends Controller
                     'type'        => 'credit',
                     'amount'      => round((float) $tx->amount, 2),
                     'description' => $tx->details ?? 'Incoming SEPA',
-                    'date'        => $tx->created_at->toDateString(),
+                    'date'        => $tx->created_at?->toDateString() ?? now()->toDateString(),
                 ];
             });
 
@@ -346,12 +349,12 @@ class DeepayController extends Controller
                     default      => $tx->trx_type === '+' ? 'credit' : 'debit',
                 };
 
-                return [
+        return [
                     'id'          => $tx->id,
                     'type'        => $type,
                     'amount'      => round((float) $tx->amount, 2),
                     'description' => $tx->details ?? ucfirst($tx->remark ?? 'Transaction'),
-                    'date'        => $tx->created_at->toDateString(),
+                    'date'        => $tx->created_at?->toDateString() ?? now()->toDateString(),
                 ];
             });
 

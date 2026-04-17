@@ -1,14 +1,15 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Home, ArrowLeftRight, CreditCard, Wallet, QrCode, Star } from 'lucide-react';
+import { Home, Wallet, ArrowLeftRight, Building2, Activity, Star, QrCode } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { HomePage } from './components/HomePage';
-import { CardsPage } from './components/CardsPage';
 import { WalletsPage } from './components/WalletsPage';
+import { TransferPage } from './components/TransferPage';
+import { IBANPage } from './components/IBANPage';
+import { ActivityPage } from './components/ActivityPage';
 import { ProfilePage } from './components/ProfilePage';
 import { PointsPage } from './components/PointsPage';
 import { QRCodePage } from './components/QRCodePage';
-import { TransferModal } from './components/TransferModal';
 import { AddMoneyModal } from './components/AddMoneyModal';
 import { SplashScreen } from './components/SplashScreen';
 import { PageSwipeTransition } from './components/PageTransition';
@@ -17,30 +18,31 @@ import { ThemeProvider } from './contexts/ThemeContext';
 /* ─── nav tab definition ──────────────────────────────────── */
 const TABS = [
   { id: 'home',     icon: Home,           labelKey: 'tab.home'     },
+  { id: 'wallet',   icon: Wallet,         labelKey: 'tab.wallet'   },
   { id: 'transfer', icon: ArrowLeftRight, labelKey: 'tab.transfer' },
-  { id: 'cards',    icon: CreditCard,     labelKey: 'tab.cards'    },
-  { id: 'wallets',  icon: Wallet,         labelKey: 'tab.wallets'  },
+  { id: 'iban',     icon: Building2,      labelKey: 'tab.iban'     },
+  { id: 'activity', icon: Activity,       labelKey: 'tab.activity' },
   { id: 'points',   icon: Star,           labelKey: 'tab.points'   },
 ];
 
 /* ─── App ─────────────────────────────────────────────────── */
 export default function App() {
   const { t } = useTranslation();
-  const [activeTab, setActiveTab]             = useState('home');
-  const [showTransferModal, setTransferModal]  = useState(false);
-  const [showAddMoneyModal, setAddMoneyModal]  = useState(false);
-  const [showSplash, setShowSplash]            = useState(true);
-  const [showProfile, setShowProfile]          = useState(false);
-  const [showQR, setShowQR]                    = useState(false);
+  const [activeTab, setActiveTab]            = useState('home');
+  const [showAddMoneyModal, setAddMoneyModal] = useState(false);
+  const [showSplash, setShowSplash]           = useState(true);
+  const [showProfile, setShowProfile]         = useState(false);
+  const [showQR, setShowQR]                   = useState(false);
 
   const renderPage = () => {
     if (showProfile) return <ProfilePage onBack={() => setShowProfile(false)} onViewWebsite={() => {}} />;
     if (showQR)      return <QRCodePage onBack={() => setShowQR(false)} />;
     switch (activeTab) {
-      case 'home':     return <HomePage onAddMoney={() => setAddMoneyModal(true)} onTransfer={() => setTransferModal(true)} onOpenProfile={() => setShowProfile(true)} />;
-      case 'transfer': return <WalletsPage showTransferTab />;
-      case 'cards':    return <CardsPage />;
-      case 'wallets':  return <WalletsPage />;
+      case 'home':     return <HomePage onAddMoney={() => setAddMoneyModal(true)} onTransfer={() => setActiveTab('transfer')} onOpenProfile={() => setShowProfile(true)} />;
+      case 'wallet':   return <WalletsPage onAddMoney={() => setAddMoneyModal(true)} onTransfer={() => setActiveTab('transfer')} onWithdraw={() => setActiveTab('transfer')} />;
+      case 'transfer': return <TransferPage />;
+      case 'iban':     return <IBANPage />;
+      case 'activity': return <ActivityPage />;
       case 'points':   return <PointsPage />;
       default:         return null;
     }
@@ -140,7 +142,6 @@ export default function App() {
       </motion.div>
 
       {/* Modals */}
-      <TransferModal isOpen={showTransferModal} onClose={() => setTransferModal(false)} />
       <AddMoneyModal isOpen={showAddMoneyModal} onClose={() => setAddMoneyModal(false)} />
     </ThemeProvider>
   );

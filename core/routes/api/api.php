@@ -69,6 +69,19 @@ Route::namespace('Api')->name('api.')->group(function () {
             Route::post('kyc-submit', 'kycSubmit');
         });
 
+        // ── Deblock-style endpoints (registered first to take priority over legacy routes) ──
+        Route::controller('DeepayController')->group(function () {
+            Route::get('dashboard/overview', 'overview');
+            Route::get('wallets', 'wallets');
+            Route::post('transfer', 'transfer');
+            Route::get('iban', 'iban');
+            Route::get('iban/transactions', 'ibanTransactions');
+            Route::post('payments/create', 'createPayment');
+            Route::post('withdraw', 'withdraw');
+            Route::get('transactions', 'transactions');
+        });
+        // ────────────────────────────────────────────────────────────────
+
         Route::middleware(['mobile.verify', 'registration.complete', 'check.status'])->group(function () {
 
             Route::controller('UserController')->group(function () {
@@ -96,6 +109,10 @@ Route::namespace('Api')->name('api.')->group(function () {
 
                 //Report
                 Route::any('add-money/history', 'addMoneyHistory')->middleware('kyc');
+                // NOTE: GET transactions is intentionally handled by DeepayController above
+                // (registered earlier, bypasses check.status for the PWA frontend).
+                // This registration is kept for the legacy web/mobile-app clients that rely
+                // on the richer paginated format with `check.status` enforcement.
                 Route::get('transactions', 'transactions');
 
                 Route::get('push-notifications', 'pushNotifications');
@@ -294,19 +311,6 @@ Route::namespace('Api')->name('api.')->group(function () {
 
         Route::get('logout', 'Auth\LoginController@logout');
         Route::post('add-device-token', 'UserController@addDeviceToken');
-
-        // ── Deblock-style endpoints ──────────────────────────────────────
-        Route::controller('DeepayController')->group(function () {
-            Route::get('dashboard/overview', 'overview');
-            Route::get('wallets', 'wallets');
-            Route::post('transfer', 'transfer');
-            Route::get('iban', 'iban');
-            Route::get('iban/transactions', 'ibanTransactions');
-            Route::post('payments/create', 'createPayment');
-            Route::post('withdraw', 'withdraw');
-            Route::get('transactions', 'transactions');
-        });
-        // ────────────────────────────────────────────────────────────────
     });
 });
 

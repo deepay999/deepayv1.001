@@ -2,8 +2,9 @@ import { useState, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ChevronDown } from 'lucide-react';
 import { setLanguage } from './i18n';
+import type { Lang } from './index';
 
-const LANGUAGES = [
+const LANGUAGES: Array<{ code: Lang; flag: string; name: string }> = [
   { code: 'zh', flag: '🇨🇳', name: '中文' },
   { code: 'en', flag: '🇬🇧', name: 'English' },
 ];
@@ -30,7 +31,7 @@ export function LanguageDropdown() {
     return () => document.removeEventListener('mousedown', handler);
   }, []);
 
-  function select(code: string) {
+  function select(code: Lang) {
     setLanguage(code);
     setOpen(false);
   }

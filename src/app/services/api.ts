@@ -1,8 +1,22 @@
 const BASE_URL = '/api';
 
+const TOKEN_KEY = 'deepay_token';
+
+export const auth = {
+  getToken: (): string | null => localStorage.getItem(TOKEN_KEY),
+  setToken: (token: string) => localStorage.setItem(TOKEN_KEY, token),
+  clearToken: () => localStorage.removeItem(TOKEN_KEY),
+};
+
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
+  const token = auth.getToken();
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    Accept: 'application/json',
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+  };
   const res = await fetch(`${BASE_URL}${path}`, {
-    headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+    headers,
     ...options,
   });
   if (!res.ok) throw new Error(`API error ${res.status}`);
@@ -78,8 +92,34 @@ export interface Transaction {
   date: string;
 }
 
+export interface LoginRequest {
+  username: string;
+  password: string;
+}
+
+export interface LoginResponse {
+  access_token: string;
+  token_type: string;
+}
+
 /* ── API calls ─────────────────────────────────────────────── */
 export const api = {
+  login: async (data: LoginRequest): Promise<LoginResponse> => {
+    const json = await request<LoginResponse>('/authentication', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+    if (json.access_token) {
+      auth.setToken(json.access_token);
+    }
+    return json;
+  },
+
+  logout: () => {
+    auth.clearToken();
+    return request<void>('/logout');
+  },
+
   getDashboardOverview: () =>
     request<DashboardOverview>('/dashboard/overview'),
 
