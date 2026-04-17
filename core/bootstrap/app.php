@@ -124,7 +124,7 @@ return Application::configure(basePath: dirname(__DIR__))
         );
     })
     ->withExceptions(function (Exceptions $exceptions) {
-        $exceptions->render(function (Exception $e, Request $request) {
+        $exceptions->render(function (\Throwable $e, Request $request) {
 
             //for handle custom 
             if (str_starts_with($e->getMessage(), "custom_not_found_exception") || isApiRequest()) {

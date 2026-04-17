@@ -109,6 +109,10 @@ Route::namespace('Api')->name('api.')->group(function () {
 
                 //Report
                 Route::any('add-money/history', 'addMoneyHistory')->middleware('kyc');
+                // NOTE: GET transactions is intentionally handled by DeepayController above
+                // (registered earlier, bypasses check.status for the PWA frontend).
+                // This registration is kept for the legacy web/mobile-app clients that rely
+                // on the richer paginated format with `check.status` enforcement.
                 Route::get('transactions', 'transactions');
 
                 Route::get('push-notifications', 'pushNotifications');
