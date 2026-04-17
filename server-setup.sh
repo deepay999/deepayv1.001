@@ -6,8 +6,8 @@
 # ============================================================
 set -euo pipefail
 
-DEPLOY_DIR="/var/www/deepayv1.001"
-REPO_URL="https://github.com/deepveloce-dot/deepayv1.001.git"
+DEPLOY_DIR="/www/wwwroot/www.deepay.srl"
+REPO_URL="https://github.com/deepay999/deepayv1.001.git"
 DEPLOY_BRANCH="main"
 
 echo ""
