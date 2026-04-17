@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { Home, Wallet, ArrowLeftRight, Building2, Activity, Star } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { HomePage } from './components/HomePage';
-import { WalletPage } from './components/WalletPage';
+import { WalletsPage } from './components/WalletsPage';
 import { TransferPage } from './components/TransferPage';
 import { IBANPage } from './components/IBANPage';
 import { ActivityPage } from './components/ActivityPage';
@@ -36,7 +36,7 @@ export default function App() {
     if (showProfile) return <ProfilePage onBack={() => setShowProfile(false)} onViewWebsite={() => {}} />;
     switch (activeTab) {
       case 'home':     return <HomePage onAddMoney={() => setAddMoneyModal(true)} onTransfer={() => setActiveTab('transfer')} onOpenProfile={() => setShowProfile(true)} />;
-      case 'wallet':   return <WalletPage />;
+      case 'wallet':   return <WalletsPage />;
       case 'transfer': return <TransferPage />;
       case 'iban':     return <IBANPage />;
       case 'activity': return <ActivityPage />;
